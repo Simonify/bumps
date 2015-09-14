@@ -1,0 +1,1 @@
+export const TIMELINE_SEGMENT = 'TIMELINE_SEGMENT';

@@ -1,0 +1,58 @@
+{
+  "extends": "airbnb",
+  "env": {
+    "browser": true,
+    "mocha": true,
+    "node": true
+  },
+  "rules": {
+    "indent": [2, 2, { "SwitchCase": 1 }],
+    "camelcase": [2, { "properties": "never" }], // API logic uses underscores
+
+    "valid-jsdoc": 2,
+    "react/jsx-uses-react": 2,
+    "react/jsx-uses-vars": 2,
+    "react/react-in-jsx-scope": 2,
+    "react/sort-comp": [1, {
+      order: [ 'lifecycle', 'render', 'everything-else'],
+      groups: {
+        lifecycle: [
+          'displayName',
+          'mixins',
+          'isPureComponent',
+          'autoBind',
+          'statics',
+          'contextTypes',
+          'childContextTypes',
+          'defaultProps',
+          'propTypes',
+          'getDefaultProps',
+          'getInitialState',
+          'getChildContext',
+          'constructor',
+          'componentWillMount',
+          'componentDidMount',
+          'componentWillReceiveProps',
+          'shouldComponentUpdate',
+          'componentWillUpdate',
+          'componentDidUpdate',
+          'componentWillUnmount'
+        ]
+      }
+    }],
+
+    // Disable things we don't mind internally
+    "new-cap": 0,
+    "no-alert": 0,
+
+    // Disable until Flow supports let and const
+    "no-var": 0,
+    "vars-on-top": 0,
+
+    // Disable comma-dangle unless need to support it
+    "comma-dangle": 0
+  },
+  "plugins": [
+    "react"
+  ]
+}
