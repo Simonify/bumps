@@ -72,6 +72,18 @@ export default class EditorOptionsComponent extends Component {
           />
         );
         break;
+      case EditorConstants.BOOLEAN:
+        console.log(value);
+        control = (
+          <input
+            type="checkbox"
+            className="boolean-option"
+            disabled={disabled}
+            checked={value === true}
+            onChange={this._onChangeOption.bind(this, option)}
+          />
+        );
+        break;
     }
 
     return (
@@ -106,6 +118,9 @@ export default class EditorOptionsComponent extends Component {
         break;
       case EditorConstants.TEXT:
         value = event.currentTarget.value;
+        break;
+      case EditorConstants.BOOLEAN:
+        value = event.currentTarget.checked;
         break;
     }
 

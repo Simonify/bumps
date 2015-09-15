@@ -229,7 +229,13 @@ export default class EditorComponent extends Component {
           property: 'text'
         }));
         break;
-
+      case TypeConstants.LOGO:
+        options = options.push(new Map({
+          label: 'Small logo',
+          type: EditorConstants.BOOLEAN,
+          property: 'small'
+        }));
+        break;
       case TypeConstants.IMAGE:
         options = options.push(new Map({
           label: 'URL',

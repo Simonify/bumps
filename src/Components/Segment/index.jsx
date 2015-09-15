@@ -35,6 +35,14 @@ export default class SegmentComponent extends Component {
           </div>
         );
       case TypeConstants.LOGO:
+        if (segment.get('small') === true) {
+          return (
+            <div className="segment-type segment-logo segment-logo-small">
+              <img src="http://i.imgur.com/zwx39CO.png" className="image" />
+            </div>
+          );
+        }
+
         return (
           <div className="segment-type segment-logo">
             <img src="http://i.imgur.com/tmemlQd.png" className="image" />
