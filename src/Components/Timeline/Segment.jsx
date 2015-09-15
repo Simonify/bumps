@@ -149,7 +149,7 @@ export default class TimelineSegmentComponent extends Component {
     window.addEventListener('mouseup', this._stopResize, false);
   }
 
-  _onResize() {
+  _onResize(event) {
     let diff = event.clientX - this._mouseX;
 
     if (this._reverse) {

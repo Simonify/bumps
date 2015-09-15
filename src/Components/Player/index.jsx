@@ -213,7 +213,7 @@ export default class PlayerComponent extends Component {
   _onChangePosition(position) {
     const segment = getSegmentForPosition(this.props.bump, position);
     this.setState({ position, segment });
-    this.props.onChangePosition(position);
+    this.props.onChangePosition && this.props.onChangePosition(position);
   }
 
   _onAnimationFrame() {
