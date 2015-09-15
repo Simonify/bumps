@@ -65,6 +65,8 @@ html, body, #root {
       overflow: auto;
 
       .title {
+        display: block;
+        width: 100%;
         padding: 10px;
         background-color: #333333;
         font-weight: 500;

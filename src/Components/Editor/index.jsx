@@ -4,6 +4,7 @@ import { shouldComponentUpdate } from 'react-immutable-render-mixin';
 import * as TypeConstants from 'bumps/Constants/TypeConstants';
 import * as EditorConstants from 'bumps/Constants/EditorConstants';
 import round from 'bumps/Utils/round';
+import rebuildBump from 'bumps/Utils/rebuildBump';
 import getSegmentForPosition from 'bumps/Utils/getSegmentForPosition';
 import TimelineComponent from 'bumps/Components/Timeline';
 import EditorOptionsComponent from 'bumps/Components/EditorOptions';
@@ -69,6 +70,7 @@ export default class EditorComponent extends Component {
     this._startEditing = ::this._startEditing;
     this._toggleState = ::this._toggleState;
     this._onClickExport = ::this._onClickExport;
+    this._onClickImport = ::this._onClickImport;
     this._onChangeTimelinePosition = ::this._onChangeTimelinePosition;
     this.state = {
       position: 0,
@@ -211,7 +213,7 @@ export default class EditorComponent extends Component {
         property: 'duration',
         minimum: 0.2,
         validate(number) {
-          return round(number, 2);
+          return round(number, 1);
         }
       })
     ]);
@@ -297,6 +299,9 @@ export default class EditorComponent extends Component {
         <a href="#" className="control-option" onClick={this._onClickExport}>
           Export Bump
         </a>
+        <a href="#" className="control-option" onClick={this._onClickImport}>
+          Import Bump
+        </a>
       </div>
     );
   }
@@ -367,7 +372,7 @@ export default class EditorComponent extends Component {
   _getSegmentsDuration(segments) {
     return round(segments.reduce((value, segment) => {
       return value + segment.get('duration');
-    }, 0), 2);
+    }, 0), 1);
   }
 
   _getDuration(bump) {
@@ -442,5 +447,25 @@ export default class EditorComponent extends Component {
   _onClickExport(event) {
     event.preventDefault();
     window.alert(JSON.stringify(this.props.bump.toJS()));
+  }
+
+  _onClickImport(event) {
+    event.preventDefault();
+    const json = window.prompt('Please provide the Bump JSON:');
+
+    if (json) {
+      let fromJSON;
+
+      try {
+        fromJSON = JSON.parse(json);
+      } catch (e) {}
+
+      if (fromJSON) {
+        this.props.onChange(rebuildBump(fromJSON));
+        return;
+      }
+
+      window.alert('Invalid JSON.');
+    }
   }
 }

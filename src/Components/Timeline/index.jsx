@@ -7,13 +7,13 @@ import * as TypeConstants from 'bumps/Constants/EditorConstants';
 import * as ItemTypeConstants from 'bumps/Constants/ItemTypeConstants';
 import TimelineSegmentComponent from './Segment';
 
-const cardTarget = {
+const timelineTarget = {
   drop() {
   }
 };
 
 @DragDropContext(HTML5Backend)
-@DropTarget(ItemTypeConstants.TIMELINE_SEGMENT, cardTarget, connect => ({
+@DropTarget(ItemTypeConstants.TIMELINE_SEGMENT, timelineTarget, connect => ({
   connectDropTarget: connect.dropTarget()
 }))
 export default class TimelineComponent extends Component {
@@ -39,6 +39,7 @@ export default class TimelineComponent extends Component {
     this.renderSegment = ::this.renderSegment;
     this._startTracker = ::this._startTracker;
     this._onMoveTracker = ::this._onMoveTracker;
+    this._getWidthForDuration = ::this._getWidthForDuration;
     this._findIndex = ::this._findIndex;
     this._moveSegment = ::this._moveSegment;
     this.state = { zoom: 1 };
@@ -70,7 +71,7 @@ export default class TimelineComponent extends Component {
   }
 
   renderPositionTrack() {
-    const left = this._getWidthForDuration(this.props.position);
+    const left = this._getWidthForDuration(this.props.position) + 'px';
     const style = { transform: `translateX(${left})` };
 
     return (
@@ -84,14 +85,13 @@ export default class TimelineComponent extends Component {
 
   renderSegment(id) {
     const segment = this.props.bump.getIn(['segments', id]);
-    const width = this._getWidthForDuration(segment.get('duration'));
 
     return (
       <TimelineSegmentComponent
         key={id}
-        width={width}
         segment={segment}
         findIndex={this._findIndex}
+        getWidth={this._getWidthForDuration}
         move={this._moveSegment}
         onClick={this.props.onSelectSegment}
         onChange={this.props.onChangeSegment}
@@ -116,7 +116,7 @@ export default class TimelineComponent extends Component {
         return (
           <TimelineSegmentComponent
             key={audio.get('id')}
-            width={width}
+            getWidth={this._getWidthForDuration}
             segment={audio}
             onChange={this.props.onChangeAudio}
           />
@@ -126,7 +126,7 @@ export default class TimelineComponent extends Component {
   }
 
   _getWidthForDuration(duration) {
-    return `${(duration * this.state.zoom) * 100}px`;
+    return ((duration * this.state.zoom) * 100);
   }
 
   _moveSegment(id, atIndex) {

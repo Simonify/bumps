@@ -1,9 +1,10 @@
 import { is } from 'immutable';
-import React, { Component } from 'react';
+import React, { Component, PropTypes } from 'react';
 import * as TypeConstants from 'bumps/Constants/TypeConstants';
 import getYT from 'bumps/Utils/Youtube';
 
 const YOUTUBE_REGEX = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/ ]{11})/;
+const DEBUG_YOUTUBE = false;
 let AUDIO_NODE;
 
 function getAudioNode() {
@@ -11,10 +12,19 @@ function getAudioNode() {
     AUDIO_NODE = document.createElement('div');
     AUDIO_NODE.id = 'AUDIO_NODE';
     AUDIO_NODE.style.position = 'absolute';
-    AUDIO_NODE.style.width = '0px';
-    AUDIO_NODE.style.height = '0px';
-    AUDIO_NODE.style.top = '-10px';
-    AUDIO_NODE.style.right = '-10px';
+
+    if (DEBUG_YOUTUBE) {
+      AUDIO_NODE.style.width = '350px';
+      AUDIO_NODE.style.height = '350px';
+      AUDIO_NODE.style.top = '0px';
+      AUDIO_NODE.style.right = '0px';
+    } else {
+      AUDIO_NODE.style.width = '0px';
+      AUDIO_NODE.style.height = '0px';
+      AUDIO_NODE.style.top = '-100px';
+      AUDIO_NODE.style.right = '-100px';
+    }
+
     document.body.appendChild(AUDIO_NODE);
   }
 
@@ -29,10 +39,11 @@ function releaseAudioNode() {
 
 export default class AudioPlayerComponent extends Component {
   static propTypes = {
-    onReady: React.PropTypes.func.isRequired,
-    onError: React.PropTypes.func.isRequired,
-    defaultPosition: React.PropTypes.number.isRequired,
-    audio: React.PropTypes.object,
+    defaultPosition: PropTypes.number.isRequired,
+    onChangePosition: React.PropTypes.func.isRequired,
+    onReady: PropTypes.func.isRequired,
+    audio: PropTypes.object,
+    onError: PropTypes.func
   };
 
   constructor(props, context) {
@@ -41,6 +52,7 @@ export default class AudioPlayerComponent extends Component {
     this._onReady = ::this._onReady;
     this._onVideoStateChange = ::this._onVideoStateChange;
     this._audioPlayer = null;
+    console.log('yt not ready');
     this._loaded = false;
     this.playing = false;
     this.state = this._getStateFromProps(props);
@@ -82,14 +94,28 @@ export default class AudioPlayerComponent extends Component {
       }
     }
 
+    if (this.playing) {
+      return Promise.resolve();
+    }
+
     this.playing = true;
 
+    console.log('play');
+
     return new Promise((resolve, reject) => {
+      console.log('hillo');
       if (this.state.videoId) {
         this._playPromise = { resolve, reject };
 
+        console.log('_loaded', this._loaded);
+
         if (this._loaded) {
-          this._audioPlayer.playVideo();
+          if (this._hasPausedOnce) {
+            console.log('#yt play');
+            this._audioPlayer.playVideo();
+          }
+
+          console.log('#yt seek');
           this._audioPlayer.seekTo(this.props.audio.get('start') + this.props.defaultPosition);
         }
       } else {
@@ -99,7 +125,9 @@ export default class AudioPlayerComponent extends Component {
   }
 
   seek() {
+    console.log('seek');
     if (this.state.videoId && this._loaded && this.playing) {
+      console.log('#yt seek');
       this._audioPlayer.seekTo(this.props.audio.get('start') + this.props.defaultPosition);
     }
 
@@ -113,6 +141,7 @@ export default class AudioPlayerComponent extends Component {
 
       if (this.state.videoId) {
         if (this._loaded) {
+          this._hasPausedOnce = true;
           this._audioPlayer.pauseVideo();
         }
       }
@@ -154,7 +183,7 @@ export default class AudioPlayerComponent extends Component {
             playerVars: {
               fs: 0,
               rel: 0,
-              controls: 0,
+              controls: DEBUG_YOUTUBE ? 1 : 0,
               showinfo: 0,
               autoplay: 0,
               modestbranding: 1,
@@ -171,7 +200,12 @@ export default class AudioPlayerComponent extends Component {
   }
 
   _onVideoStateChange(event) {
+    console.log(event.data);
+
     if (event.data === window.YT.PlayerState.PLAYING) {
+      const position = this._audioPlayer.getCurrentTime() - this.props.audio.get('start');
+      console.log('started', position);
+      this.props.onChangePosition(position);
       this._startTracking();
     } else if (event.data === 0) {
       this._onFinished();
@@ -202,12 +236,17 @@ export default class AudioPlayerComponent extends Component {
   }
 
   _onReady() {
+    console.log('yt ready');
     this._loaded = true;
     this.props.onReady(this);
   }
 
   _onError(err) {
-    this.props.onError(err);
+    if (this.props.onError) {
+      this.props.onError(err);
+    } else {
+      this.props.onReady(this); // just pretend nothing went wrong. bliss.
+    }
   }
 
   _onFinished() {
@@ -215,11 +254,15 @@ export default class AudioPlayerComponent extends Component {
   }
 
   _destroy() {
-    this._loaded = false;
+    if (this._loaded) {
+      console.log('yt not ready');
 
-    if (this._audioPlayer) {
-      this._audioPlayer.destroy();
-      this._audioPlayer = null;
+      this._loaded = false;
+
+      if (this._audioPlayer) {
+        this._audioPlayer.destroy();
+        this._audioPlayer = null;
+      }
     }
   }
 }

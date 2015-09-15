@@ -36,7 +36,6 @@ const segmentTarget = {
     const overId = props.segment.get('id');
 
     if (draggedId !== overId) {
-      console.log(draggedId, overId);
       const newIndex = props.findIndex(overId);
 
       if (originalIndex !== newIndex) {
@@ -55,13 +54,12 @@ const segmentTarget = {
 }))
 export default class TimelineSegmentComponent extends Component {
   static propTypes = {
-    width: PropTypes.string.isRequired,
+    getWidth: PropTypes.func.isRequired,
     segment: PropTypes.object.isRequired,
-    selected: PropTypes.bool.isRequired,
-    onClick: PropTypes.func.isRequired,
     onChange: PropTypes.func.isRequired,
-    move: React.PropTypes.func.isRequired,
-
+    selected: PropTypes.bool,
+    onClick: PropTypes.func,
+    move: React.PropTypes.func,
     connectDragSource: PropTypes.func.isRequired,
     isDragging: PropTypes.bool.isRequired
   };
@@ -69,16 +67,36 @@ export default class TimelineSegmentComponent extends Component {
   constructor(props, context) {
     super(props, context);
     this._onClick = ::this._onClick;
-    this._startResize = ::this._startResize;
     this._onResize = ::this._onResize;
     this._stopResize = ::this._stopResize;
+    this._startResize = ::this._startResize;
+    this._dragDuration = null;
+  }
+
+  componentDidMount() {
+    this._node = React.findDOMNode(this);
+  }
+
+  componentWillReceiveProps(props) {
+    if (!this._resizing) {
+      const duration = this._dragDuration;
+
+      if (duration !== null && duration !== props.segment.get('duration')) {
+        this._dragDuration = props.segment.get('duration');
+      }
+    }
+  }
+
+  componentWillUnmount() {
+    this._node = null;
   }
 
   shouldComponentUpdate
 
   render() {
-    const { width, segment, isDragging, connectDragSource, connectDropTarget } = this.props;
-    const style = { width };
+    const { getWidth, segment, isDragging, connectDragSource, connectDropTarget } = this.props;
+    const duration = this._getDuration();
+    const style = { width: getWidth(duration) + 'px' };
     let className = `segment is-${segment.get('type').toLowerCase()}`;
 
     if (this.props.selected) {
@@ -105,6 +123,14 @@ export default class TimelineSegmentComponent extends Component {
     ));
   }
 
+  _getDuration() {
+    if (this._dragDuration !== null) {
+      return this._dragDuration;
+    }
+
+    return this.props.segment.get('duration');
+  }
+
   _onClick(event) {
     event.preventDefault();
     this.props.onClick(this.props.segment.get('id'));
@@ -114,11 +140,12 @@ export default class TimelineSegmentComponent extends Component {
     event.preventDefault();
     event.stopPropagation();
 
-    this._trackingMouse = true;
+    this._resizing = true;
     this._mouseX = event.clientX;
     this._reverse = reverse;
+    this._dragDuration = this.props.segment.get('duration');
 
-    document.body.addEventListener('mousemove', this._onResize, false);
+    window.addEventListener('mousemove', this._onResize, false);
     window.addEventListener('mouseup', this._stopResize, false);
   }
 
@@ -129,20 +156,39 @@ export default class TimelineSegmentComponent extends Component {
       diff = diff * -1;
     }
 
-    const duration = this.props.segment.get('duration');
-    const newDuration = round(Math.max(duration + (diff / 100), 0.2), 2); // minimum duration
+    const duration = this._dragDuration;
+    const newDuration = Math.max(duration + (diff / 100), 0.2) // minimum duration
 
+    this._dragDuration = newDuration;
     this._mouseX = event.clientX;
-    this.props.onChange(this.props.segment.set('duration', newDuration));
+
+    const width = this.props.getWidth(newDuration);
+    this._node.style.width = `${width}px`;
+
+    const parentNode = this._node.parentNode.parentNode // more efficient but gross?
+    const nodeLeft = this._node.offsetLeft;
+    const farEdge = nodeLeft + width;
+    const farViewport = parentNode.scrollLeft + parentNode.offsetWidth;
+
+    if (farEdge > farViewport) {
+      parentNode.scrollLeft = farEdge;
+    }
   }
 
   _stopResize() {
     event.preventDefault();
 
-    this._trackingMouse = false;
+    if (this._dragDuration !== this.props.duration) {
+      this.props.onChange(
+        this.props.segment.set('duration', round(this._dragDuration, 1))
+      );
+    }
+
+    this._dragDuration = null;
+    this._resizing = false;
     this._mouseX = null;
 
-    document.body.removeEventListener('mousemove', this._onResize, false);
+    window.removeEventListener('mousemove', this._onResize, false);
     window.removeEventListener('mouseup', this._stopResize, false);
   }
 }

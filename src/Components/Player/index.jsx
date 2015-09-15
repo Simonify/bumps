@@ -29,6 +29,7 @@ export default class PlayerComponent extends Component {
     this._loadId = 0;
     this._setAudioRef = ::this._setAudioRef;
     this._onAudioReady = ::this._onAudioReady;
+    this._onChangePosition = ::this._onChangePosition;
     this._onAnimationFrame = ::this._onAnimationFrame;
     this.state = {
       ready: false,
@@ -48,13 +49,21 @@ export default class PlayerComponent extends Component {
     if (oldId !== newId) {
       this._load();
       return;
-    } else if (!is(this.props.bump.get('segments'), props.bump.get('segments'))) {
-      const segment = getSegmentForPosition(props.bump, this.state.position);
-      this.setState({ segment });
+    } else if (this.state.segment) {
+      if (!is(this.props.bump.get('segments'), props.bump.get('segments'))) {
+        const segment = getSegmentForPosition(props.bump, this.state.position);
+
+        if (
+          !segment ||
+          segment.get('id') !== this.state.segment.get('id') ||
+          !is(this.state.segment, segment)
+        ) {
+          this.setState({ segment });
+        }
+      }
     }
 
     if (this.props.playing !== props.playing) {
-      debugger;
       if (props.playing) {
         this._play(props);
       } else {
@@ -98,6 +107,7 @@ export default class PlayerComponent extends Component {
           onReady={this._onAudioReady}
           onError={this._onAudioError}
           defaultPosition={this.state.position}
+          onChangePosition={this._onChangePosition}
         />
       </div>
     );
@@ -162,29 +172,48 @@ export default class PlayerComponent extends Component {
   }
 
   _play(props = this.props) {
-    this.setState({ position: props.defaultPosition }, () => {
-      this._audioRef.play().then(() => {
-        this._start = Date.now();
-        this._ts = Date.now();
-        window.requestAnimationFrame(this._onAnimationFrame);
+    if (this.state.ready && !this._playing) {
+      this._playing = true;
+
+      this.setState({ position: props.defaultPosition }, () => {
+        this._audioRef.play().then(() => {
+          this._start = Date.now();
+          this._ts = Date.now();
+          window.requestAnimationFrame(this._onAnimationFrame);
+        });
       });
-    });
+    }
   }
 
   _seek() {
-    const position = this.props.defaultPosition;
-    const segment = getSegmentForPosition(this.props.bump, position);
+    if (this.state.ready) {
+      const position = this.props.defaultPosition;
+      const segment = getSegmentForPosition(this.props.bump, position);
 
-    this.setState({ position, segment });
-    return this._audioRef.seek();
+      this.setState({ position, segment });
+      return this._audioRef.seek();
+    }
   }
 
   _pause(props = this.props) {
-    return this._audioRef.pause();
+    if (this.state.ready) {
+      if (this._playing) {
+        this._playing = false;
+        return this._audioRef.pause();
+      } else {
+        return Promise.resolve();
+      }
+    }
   }
 
   _setAudioRef(ref) {
     this._audioRef = ref;
+  }
+
+  _onChangePosition(position) {
+    const segment = getSegmentForPosition(this.props.bump, position);
+    this.setState({ position, segment });
+    this.props.onChangePosition(position);
   }
 
   _onAnimationFrame() {
