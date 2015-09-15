@@ -180,10 +180,12 @@ export default class TimelineSegmentComponent extends Component {
   _stopResize(event) {
     event.preventDefault();
 
-    if (this._dragDuration !== this.props.duration) {
-      this.props.onChange(
-        this.props.segment.set('duration', round(this._dragDuration, 1))
-      );
+    if (this._node) {
+      if (this._dragDuration !== this.props.duration) {
+        this.props.onChange(
+          this.props.segment.set('duration', round(this._dragDuration, 1))
+        );
+      }
     }
 
     this._dragDuration = null;
