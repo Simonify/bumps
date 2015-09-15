@@ -47,6 +47,10 @@ html, body, #root {
     .image {
       max-width: 100%;
     }
+
+    &.segment-logo-small {
+      max-width: 112px;
+    }
   }
 
   .segment-image {
