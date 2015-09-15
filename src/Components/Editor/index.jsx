@@ -71,6 +71,7 @@ export default class EditorComponent extends Component {
     this._toggleState = ::this._toggleState;
     this._onClickExport = ::this._onClickExport;
     this._onClickImport = ::this._onClickImport;
+    this._onClickShare = ::this._onClickShare;
     this._onChangeTimelinePosition = ::this._onChangeTimelinePosition;
     this.state = {
       position: 0,
@@ -288,19 +289,22 @@ export default class EditorComponent extends Component {
         </div>
         {control}
         <a href="#" className="control-option" onClick={this._onClickAddSegment.bind(this, TypeConstants.TEXT)}>
-          Add text segment
+          Add text
         </a>
         <a href="#" className="control-option" onClick={this._onClickAddSegment.bind(this, TypeConstants.IMAGE)}>
-          Add image segment
+          Add image
         </a>
         <a href="#" className="control-option" onClick={this._onClickAddSegment.bind(this, TypeConstants.LOGO)}>
-          Add logo segment
+          Add logo
         </a>
         <a href="#" className="control-option" onClick={this._onClickExport}>
-          Export Bump
+          Export
         </a>
         <a href="#" className="control-option" onClick={this._onClickImport}>
-          Import Bump
+          Import
+        </a>
+        <a href="#" className="control-option" onClick={this._onClickShare}>
+          Share
         </a>
       </div>
     );
@@ -446,7 +450,7 @@ export default class EditorComponent extends Component {
 
   _onClickExport(event) {
     event.preventDefault();
-    window.alert(JSON.stringify(this.props.bump.toJS()));
+    window.alert(window.JSON.stringify(this.props.bump.toJS()));
   }
 
   _onClickImport(event) {
@@ -457,7 +461,7 @@ export default class EditorComponent extends Component {
       let fromJSON;
 
       try {
-        fromJSON = JSON.parse(json);
+        fromJSON = window.JSON.parse(json);
       } catch (e) {}
 
       if (fromJSON) {
@@ -467,5 +471,11 @@ export default class EditorComponent extends Component {
 
       window.alert('Invalid JSON.');
     }
+  }
+
+  _onClickShare(event) {
+    event.preventDefault();
+    const bump = window.encodeURIComponent(window.JSON.stringify(this.props.bump.toJS()));
+    window.open(`http://simonify.github.io/bumps/examples/player/#${bump}`)
   }
 }
