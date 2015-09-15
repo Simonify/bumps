@@ -47,7 +47,7 @@ export default class PlayerComponent extends Component {
     const newId = props.bump && props.bump.get('id');
 
     if (oldId !== newId) {
-      this._load();
+      this._preload(props.bump);
       return;
     } else if (this.state.segment) {
       if (!is(this.props.bump.get('segments'), props.bump.get('segments'))) {
@@ -150,23 +150,38 @@ export default class PlayerComponent extends Component {
       }
     });
 
-    return Promise.all(promises);
+    const promise = Promise.all(promises);
+    promise.then(() => {
+      if (this._audioReady) {
+        this._isReady();
+      }
+    });
+
+    return promise;
   }
 
   _onAudioReady() {
+    this._audioReady = true;
+
     const loadId = this._loadId;
 
-    this._preloadPromise.then(() => {
-      if (this._loadId === loadId) {
-        this.setState({ ready: true });
-        /** Audio track is ready **/
-        if (this.props.playing) {
-          this._play();
-        } else {
-          this._seek();
+    if (this._preloadPromise) {
+      this._preloadPromise.then(() => {
+        if (this._loadId === loadId) {
+          this._isReady();
         }
-      }
-    });
+      });
+    }
+  }
+
+  _isReady() {
+    this.setState({ ready: true });
+    /** Audio track is ready **/
+    if (this.props.playing) {
+      this._play();
+    } else {
+      this._seek();
+    }
   }
 
   _play(props = this.props) {
@@ -205,6 +220,10 @@ export default class PlayerComponent extends Component {
   }
 
   _setAudioRef(ref) {
+    if (!ref) {
+      this._audioReady = false;
+    }
+
     this._audioRef = ref;
   }
 
