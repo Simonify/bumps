@@ -20,7 +20,6 @@ html, body, #root {
   display: block;
   width: 100%;
   height: 100%;
-  padding: 50px;
 
   .segment-type {
     display: flex;
@@ -51,8 +50,7 @@ html, body, #root {
 
   .segment-image {
     .image {
-      max-width: 500px;
-      max-height: 100%;
+      max-width: 100%;
     }
   }
 
