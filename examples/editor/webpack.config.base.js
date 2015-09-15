@@ -21,7 +21,7 @@ module.exports = {
   output: {
     path: path.join(__dirname, 'dist'),
     filename: 'bundle.js',
-    publicPath: '/static/',
+    publicPath: '/dist/',
     library: 'bumps',
     libraryTarget: 'umd'
   },

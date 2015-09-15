@@ -330,6 +330,7 @@ html, body, #root {
     justify-content: center;
     width: 100%;
     height: 100%;
+    overflow: hidden;
   }
 
   .segment-text {
@@ -342,8 +343,11 @@ html, body, #root {
   }
 
   .segment-logo {
+    margin: auto;
+    max-width: 500px;
+
     .image {
-      max-width: 500px;
+      max-width: 100%;
     }
   }
 
