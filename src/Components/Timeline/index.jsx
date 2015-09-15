@@ -170,7 +170,7 @@ export default class TimelineComponent extends Component {
     this._trackingMouse = false;
     this._mouseX = null;
     document.body.removeEventListener('mousemove', this._onMoveTracker, false);
-    window.removeEventListener('mouseup', this._stopTrackingTracker, false);
+    window.removeEventListener('mouseup', this._stopTracker, false);
     this.setState({ tracking: false });
   }
 

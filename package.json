@@ -3,6 +3,10 @@
   "version": "0.0.1",
   "description": "The Trees Network bump components.",
   "main": "src/index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Simonify/bumps"
+  },
   "scripts": {
     "build:umd": "webpack src/index.js dist/bumps.js --config webpack.config.development.js",
     "build:umd:min": "webpack src/index.js dist/bumps.min.js --config webpack.config.production.js",
@@ -20,11 +24,9 @@
     "immutable": "^3.7.5",
     "react": "^0.13.3",
     "react-dnd": "^1.1.5",
+    "react-hot-loader": "^1.3.0",
+    "react-immutable-render-mixin": "^0.8.1",
     "webpack": "^1.12.0",
     "webpack-dev-server": "^1.10.1"
-  },
-  "dependencies": {
-    "react-hot-loader": "^1.3.0",
-    "react-immutable-render-mixin": "^0.8.1"
   }
 }

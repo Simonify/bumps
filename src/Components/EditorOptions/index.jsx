@@ -56,6 +56,7 @@ export default class EditorOptionsComponent extends Component {
             disabled={disabled}
             value={value}
             min={option.get('minimum')}
+            step="any"
             onChange={this._onChangeOption.bind(this, option)}
           />
         );

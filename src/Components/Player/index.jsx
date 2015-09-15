@@ -47,13 +47,16 @@ export default class PlayerComponent extends Component {
     if (oldId !== newId) {
       this._load();
       return;
+    } else if (!is(this.props.bump.get('segments'), props.bump.get('segments'))) {
+      const segment = getSegmentForPosition(props.bump, this.state.position);
+      this.setState({ segment });
     }
 
     if (props.playing !== this.props.playing) {
       if (props.playing) {
-        this._play();
+        this._play(props);
       } else {
-        this._pause();
+        this._pause(props);
       }
     }
   }
@@ -143,10 +146,12 @@ export default class PlayerComponent extends Component {
   }
 
   _play(props = this.props) {
-    this._audioRef.play().then(() => {
-      this._start = Date.now();
-      this._ts = Date.now();
-      window.requestAnimationFrame(this._onAnimationFrame);
+    this.setState({ position: props.defaultPosition }, () => {
+      this._audioRef.play().then(() => {
+        this._start = Date.now();
+        this._ts = Date.now();
+        window.requestAnimationFrame(this._onAnimationFrame);
+      });
     });
   }
 
