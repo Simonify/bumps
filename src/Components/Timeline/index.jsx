@@ -103,22 +103,25 @@ export default class TimelineComponent extends Component {
   renderAudioSegment() {
     if (this.props.bump.has('audio')) {
       const audio = this.props.bump.get('audio');
-      let duration = audio.get('duration');
 
-      if (typeof duration !== 'number') {
-        number = this.props.bump.get('duration');
+      if (audio.get('url')) {
+        let duration = audio.get('duration');
+
+        if (typeof duration !== 'number') {
+          number = this.props.bump.get('duration');
+        }
+
+        const width = this._getWidthForDuration(duration);
+
+        return (
+          <TimelineSegmentComponent
+            key={audio.get('id')}
+            width={width}
+            segment={audio}
+            onChange={this.props.onChangeAudio}
+          />
+        );
       }
-
-      const width = this._getWidthForDuration(duration);
-
-      return (
-        <TimelineSegmentComponent
-          key={audio.get('id')}
-          width={width}
-          segment={audio}
-          onChange={this.props.onChangeAudio}
-        />
-      );
     }
   }
 

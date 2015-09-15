@@ -393,16 +393,14 @@ export default class EditorComponent extends Component {
     let bump = this.props.bump;
     let order = bump.get('order');
     let segments = bump.get('segments');
-    let duration = bump.get('duration');
     const segment = segments.get(id);
 
     order = order.remove(order.indexOf(id));
     segments = segments.remove(id);
-    duration = duration - segment.get('duration');
 
     bump = bump.set('order', order);
     bump = bump.set('segments', segments);
-    bump = bump.set('duration', duration);
+    bump = bump.set('duration', this._getDuration(bump));
 
     this._onChangeBump(bump);
   }

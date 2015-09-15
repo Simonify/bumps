@@ -37,6 +37,7 @@ export default class AudioPlayerComponent extends Component {
 
   constructor(props, context) {
     super(props, context);
+    this._load = ::this._load;
     this._onReady = ::this._onReady;
     this._onVideoStateChange = ::this._onVideoStateChange;
     this._audioPlayer = null;
@@ -58,7 +59,7 @@ export default class AudioPlayerComponent extends Component {
       const state = this._getStateFromProps(props);
 
       if (this.state.videoId !== state.videoId || !is(this.state.video, state.video)) {
-        this._load(state);
+        this.setState(state, this._load);
       }
     }
   }
@@ -106,6 +107,7 @@ export default class AudioPlayerComponent extends Component {
   }
 
   pause() {
+    console.log('pause');
     if (this.playing) {
       this.playing = false;
 
@@ -131,7 +133,7 @@ export default class AudioPlayerComponent extends Component {
     return { videoId: null, audio: null };
   }
 
-  _load({ videoId, audio }) {
+  _load({ videoId, audio } = this.state) {
     this._destroy();
 
     if (!videoId) {
@@ -217,6 +219,7 @@ export default class AudioPlayerComponent extends Component {
 
     if (this._audioPlayer) {
       this._audioPlayer.destroy();
+      this._audioPlayer = null;
     }
   }
 }

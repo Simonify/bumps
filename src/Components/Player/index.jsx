@@ -11,7 +11,8 @@ let LOAD_IDS = 0;
 export default class PlayerComponent extends Component {
   static defaultProps = {
     playing: false,
-    preload: true
+    preload: true,
+    defaultPosition: 0
   };
 
   static propTypes = {
@@ -52,7 +53,8 @@ export default class PlayerComponent extends Component {
       this.setState({ segment });
     }
 
-    if (props.playing !== this.props.playing) {
+    if (this.props.playing !== props.playing) {
+      debugger;
       if (props.playing) {
         this._play(props);
       } else {
@@ -110,6 +112,7 @@ export default class PlayerComponent extends Component {
 
     this._loadId = ++LOAD_IDS;
     const promises = [];
+    const loaded = {};
 
     bump.get('segments').forEach((segment) => {
       switch (segment.get('type')) {
@@ -122,6 +125,19 @@ export default class PlayerComponent extends Component {
             image.onerror = reject;
             image.src = segment.get('url');
           }));
+          break;
+
+        case TypeConstants.LOGO:
+          if (!loaded.logo) {
+            loaded.logo = true;
+
+            promises.push(new Promise((resolve, reject) => {
+              const image = new Image();
+              image.onload = resolve;
+              image.onerror = reject;
+              image.src = 'http://i.imgur.com/tmemlQd.png';
+            }));
+          }
           break;
       }
     });
@@ -189,12 +205,12 @@ export default class PlayerComponent extends Component {
       const segment = getSegmentForPosition(this.props.bump, position);
 
       this.setState({ position, segment });
-      this.props.onChangePosition(position);
+      this.props.onChangePosition && this.props.onChangePosition(position);
 
       if (position < duration) {
         window.requestAnimationFrame(this._onAnimationFrame);
       } else {
-        this.props.onFinished();
+        this.props.onFinished && this.props.onFinished();
       }
     }
   }
