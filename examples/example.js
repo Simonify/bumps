@@ -24,7 +24,7 @@ export default {
             "label": "Text 3",
             "text": "It's pretty early in development"
         },
-        "segment-pepe": {
+        "image": {
             "id": "image",
             "type": "IMAGE",
             "duration": 1.2,
