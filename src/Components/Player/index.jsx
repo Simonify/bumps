@@ -127,12 +127,14 @@ export default class PlayerComponent extends Component {
         default:
           break;
         case TypeConstants.IMAGE:
-          promises.push(new Promise((resolve, reject) => {
-            const image = new Image();
-            image.onload = resolve;
-            image.onerror = reject;
-            image.src = segment.get('url');
-          }));
+          if (segment.get('url')) {
+            promises.push(new Promise((resolve, reject) => {
+              const image = new Image();
+              image.onload = resolve;
+              image.onerror = resolve;
+              image.src = segment.get('url');
+            }));
+          }
           break;
 
         case TypeConstants.LOGO:
