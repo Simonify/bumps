@@ -1,7 +1,7 @@
 export default {
     "id": "demo",
     "name": "Example bump",
-    "order": ["segment-1", "segment-2", "segment-pepe", "segment-3", "segment-4", "segment-5"],
+    "order": ["segment-1", "segment-2", "image", "segment-3", "segment-4", "segment-5"],
     "segments": {
         "segment-1": {
             "id": "segment-1",
