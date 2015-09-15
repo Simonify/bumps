@@ -25,10 +25,10 @@ export default {
             "text": "It's pretty early in development"
         },
         "segment-pepe": {
-            "id": "segment-pepe",
+            "id": "image",
             "type": "IMAGE",
             "duration": 1.2,
-            "label": "Rare Pepe",
+            "label": "Ananas",
             "url": "http://i.imgur.com/zC5bcAZ.gif"
         },
         "segment-4": {
