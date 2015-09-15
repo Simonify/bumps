@@ -242,6 +242,12 @@ export default class EditorComponent extends Component {
           type: EditorConstants.TEXT,
           property: 'url'
         }));
+
+        options = options.push(new Map({
+          label: 'Cover',
+          type: EditorConstants.BOOLEAN,
+          property: 'cover'
+        }));
         break;
     }
 

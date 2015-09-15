@@ -52,8 +52,14 @@ export default class SegmentComponent extends Component {
         const url = segment.get('url');
 
         if (url && url.match(/^https?:\/\/.*\..*\/.+/)) {
+          let className = 'segment-type segment-image';
+
+          if (segment.get('cover')) {
+            className += ' segment-image-cover';
+          }
+
           return (
-            <div className="segment-type segment-image">
+            <div className={className}>
               <img src={segment.get('url')} className="image" />
             </div>
           );
