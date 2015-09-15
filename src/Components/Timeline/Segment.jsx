@@ -170,12 +170,14 @@ export default class TimelineSegmentComponent extends Component {
     const farEdge = nodeLeft + width;
     const farViewport = parentNode.scrollLeft + parentNode.offsetWidth;
 
-    if (farEdge > farViewport) {
+    if (this._reverse) {
+      parentNode.scrollLeft += diff;
+    } else if (farEdge > farViewport) {
       parentNode.scrollLeft = farEdge;
     }
   }
 
-  _stopResize() {
+  _stopResize(event) {
     event.preventDefault();
 
     if (this._dragDuration !== this.props.duration) {
