@@ -34,7 +34,7 @@ export default class PlayerComponent extends Component {
     this.state = {
       ready: false,
       position: props.defaultPosition,
-      segment: getSegmentForPosition(props.bump, props.defaultPosition)
+      segment: null
     };
   }
 
@@ -91,9 +91,7 @@ export default class PlayerComponent extends Component {
       }
     } else {
       segment = (
-        <div>
-          Loading...
-        </div>
+        <div>Loading...</div>
       )
     }
 

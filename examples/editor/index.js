@@ -3,7 +3,17 @@ import { EditorComponent, rebuildBump } from 'bumps';
 import exampleBump from '../example';
 import './scss/index.scss';
 
-let bump = rebuildBump(exampleBump);
+let savedBump = window.localStorage.getItem('bump');
+
+if (typeof savedBump === 'string') {
+  try {
+    savedBump = JSON.parse(savedBump);
+  } catch (e) {
+    savedBump = null;
+  }
+}
+
+let bump = rebuildBump(savedBump || exampleBump);
 let onChange;
 
 function render() {
@@ -14,6 +24,7 @@ function render() {
 
 onChange = (_bump) => {
   bump = _bump;
+  window.localStorage.setItem('bump', JSON.stringify(bump.toJS()));
   render();
 };
 
