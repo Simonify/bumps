@@ -9,6 +9,7 @@ export default class EditorOptionsComponent extends Component {
   };
 
   static propTypes = {
+    title: React.PropTypes.string.isRequired,
     map: React.PropTypes.object.isRequired,
     options: React.PropTypes.object.isRequired,
     disabled: React.PropTypes.bool.isRequired,
@@ -28,6 +29,7 @@ export default class EditorOptionsComponent extends Component {
 
     return (
       <div className="options-component">
+        <div className="title">{this.props.title}</div>
         {options}
       </div>
     );
@@ -41,7 +43,11 @@ export default class EditorOptionsComponent extends Component {
       path = [].concat(this.props.keyPath).concat(path);
     }
 
-    const value = this.props.map.getIn(path);
+    let value = this.props.map.getIn(path);
+
+    if (typeof value === 'undefined') {
+      value = option.get('defaultValue');
+    }
 
     let control;
 
@@ -52,20 +58,36 @@ export default class EditorOptionsComponent extends Component {
         control = (
           <input
             type="number"
-            className="number-option"
+            className="value-option number-option"
             disabled={disabled}
             value={value}
-            min={option.get('minimum')}
+            min={option.get('min')}
             step="any"
             onChange={this._onChangeOption.bind(this, option)}
           />
         );
         break;
+      case EditorConstants.RANGE:
+        control = [
+          <input
+            type="range"
+            className="value-option range-option"
+            disabled={disabled}
+            value={value}
+            min={option.get('min')}
+            max={option.get('max')}
+            onChange={this._onChangeOption.bind(this, option)}
+          />,
+          <span className="value-hint">
+            {value}%
+          </span>
+        ];
+        break;
       case EditorConstants.TEXT:
         control = (
           <input
             type="text"
-            className="text-option"
+            className="value-option text-option"
             disabled={disabled}
             value={value}
             onChange={this._onChangeOption.bind(this, option)}
@@ -77,7 +99,7 @@ export default class EditorOptionsComponent extends Component {
         control = (
           <input
             type="checkbox"
-            className="boolean-option"
+            className="value-option boolean-option"
             disabled={disabled}
             checked={value === true}
             onChange={this._onChangeOption.bind(this, option)}
@@ -92,9 +114,7 @@ export default class EditorOptionsComponent extends Component {
           <span className="label">
             {option.get('label')}
           </span>
-          <span className="value">
-            {control}
-          </span>
+          <span className="value" children={control} />
         </label>
       </div>
     );
@@ -114,6 +134,7 @@ export default class EditorOptionsComponent extends Component {
       default:
         break;
       case EditorConstants.NUMBER:
+      case EditorConstants.RANGE:
         value = window.parseFloat(event.currentTarget.value, 10);
         break;
       case EditorConstants.TEXT:

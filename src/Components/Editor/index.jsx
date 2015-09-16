@@ -9,6 +9,8 @@ import getSegmentForPosition from 'bumps/Utils/getSegmentForPosition';
 import TimelineComponent from 'bumps/Components/Timeline';
 import EditorOptionsComponent from 'bumps/Components/EditorOptions';
 import PlayerComponent from 'bumps/Components/Player';
+import audioEditorOptions from './AudioEditorOptions';
+import bumpEditorOptions from './BumpEditorOptions';
 
 let bumps = 0;
 
@@ -19,35 +21,6 @@ const emptyBump = () => {
     segments: new List([])
   });
 };
-
-const BUMP_EDITOR_OPTIONS = new List([
-  new Map({
-    type: EditorConstants.TEXT,
-    label: 'Name',
-    property: 'name'
-  }),
-
-  new Map({
-    type: EditorConstants.NUMBER,
-    disabled: true,
-    label: 'Duration',
-    property: 'duration'
-  })
-]);
-
-const AUDIO_EDITOR_OPTIONS = new List([
-  new Map({
-    type: EditorConstants.TEXT,
-    label: 'YouTube URL',
-    property: 'url'
-  }),
-
-  new Map({
-    type: EditorConstants.NUMBER,
-    label: 'Seek',
-    property: 'start'
-  })
-])
 
 export default class EditorComponent extends Component {
   static propTypes = {
@@ -171,26 +144,23 @@ export default class EditorComponent extends Component {
     if (segmentId) {
       return (
         <div className="editor">
-          <div className="top">
-            <span className="title">Edit segment</span>
-          </div>
           {this.renderSegmentEditorOptions(segmentId)}
         </div>
       );
     } else {
       return (
         <div className="editor">
-          <div className="title">Bump settings</div>
           <EditorOptionsComponent
+            title="Bump settings"
             map={this.props.bump}
-            options={BUMP_EDITOR_OPTIONS}
+            options={bumpEditorOptions}
             onChange={this._onChangeBump}
           />
-          <div className="title">Audio settings</div>
           <EditorOptionsComponent
+            title="Audio settings"
             map={this.props.bump}
             keyPath={['audio']}
-            options={AUDIO_EDITOR_OPTIONS}
+            options={audioEditorOptions}
             onChange={this._onChangeBump}
           />
         </div>
@@ -212,7 +182,7 @@ export default class EditorComponent extends Component {
         label: 'Duration',
         type: EditorConstants.NUMBER,
         property: 'duration',
-        minimum: 0.2,
+        min: 0.2,
         validate(number) {
           return round(number, 1);
         }
@@ -255,6 +225,7 @@ export default class EditorComponent extends Component {
 
     return (
       <EditorOptionsComponent
+        title="Segment options"
         map={segment}
         options={options}
         disabled={this.state.state !== EditorConstants.EDITING || onChange === null}

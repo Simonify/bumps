@@ -11,7 +11,7 @@ let LOAD_IDS = 0;
 export default class PlayerComponent extends Component {
   static defaultProps = {
     playing: false,
-    preload: true,
+    preload: false,
     defaultPosition: 0
   };
 
@@ -20,6 +20,7 @@ export default class PlayerComponent extends Component {
     preload: React.PropTypes.bool.isRequired,
     playing: React.PropTypes.bool.isRequired,
     defaultPosition: React.PropTypes.number.isRequired,
+    volume: React.PropTypes.number,
     onFinished: React.PropTypes.func,
     onChangePosition: React.PropTypes.func
   };
@@ -39,7 +40,7 @@ export default class PlayerComponent extends Component {
   }
 
   componentDidMount() {
-    this._preloadPromise = this._preload(this.props.bump);
+    this._preload(this.props);
   }
 
   componentWillReceiveProps(props) {
@@ -47,7 +48,7 @@ export default class PlayerComponent extends Component {
     const newId = props.bump && props.bump.get('id');
 
     if (oldId !== newId) {
-      this._preload(props.bump);
+      this._preload(props);
       return;
     } else if (this.state.segment) {
       if (!is(this.props.bump.get('segments'), props.bump.get('segments'))) {
@@ -101,6 +102,7 @@ export default class PlayerComponent extends Component {
         <AudioPlayerComponent
           key={this.props.bump.get('id') + 'audio'}
           ref={this._setAudioRef}
+          volume={this.props.volume}
           audio={this.props.bump.get('audio')}
           onReady={this._onAudioReady}
           onError={this._onAudioError}
@@ -115,10 +117,9 @@ export default class PlayerComponent extends Component {
     return <SegmentComponent segment={segment} />;
   }
 
-  _preload(bump) {
-    this.setState({ ready: false });
-
+  _preload({ preload, bump }) {
     this._loadId = ++LOAD_IDS;
+
     const promises = [];
     const loaded = {};
 
@@ -152,12 +153,24 @@ export default class PlayerComponent extends Component {
       }
     });
 
-    const promise = Promise.all(promises);
-    promise.then(() => {
+    const onLoaded = () => {
+      this._preLoaded = true;
+
       if (this._audioReady) {
         this._isReady();
       }
-    });
+    };
+
+    if (!preload) {
+      onLoaded();
+      return null;
+    }
+
+    this.setState({ ready: false });
+    this._preLoaded = false;
+
+    const promise = Promise.all(promises);
+    promise.then(onLoaded);
 
     return promise;
   }
@@ -167,12 +180,8 @@ export default class PlayerComponent extends Component {
 
     const loadId = this._loadId;
 
-    if (this._preloadPromise) {
-      this._preloadPromise.then(() => {
-        if (this._loadId === loadId) {
-          this._isReady();
-        }
-      });
+    if (this._preLoaded) {
+      this._isReady();
     }
   }
 

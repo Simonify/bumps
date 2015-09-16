@@ -4,6 +4,30 @@ html, body, #root {
   height: 100%;
 }
 
+@mixin range-track() {
+  display: inline-block;
+  position: relative;
+  appearance: none;
+  background: #212121;
+  border-radius: 30px;
+  height: 8px;
+  box-shadow: inset 0px 2px 2px 0px rgba(0,0,0,0.5), 0px 1px 0px 0px rgba(255, 255, 255, 0.2);
+  outline: none;
+  border: none;
+  vertical-align: middle;
+}
+
+@mixin range-thumb() {
+  appearance: none;
+  margin-top: 4px;
+  background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACIAAAAmCAMAAACWCLnmAAAB4FBMVEUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABHR0cAAAA6OjoAAABQUFAwMDBcXFwAAABhYWE+Pj5AQEBtbW0/Pz9NTU1PT09QUFBRUVFTU1NUVFRVVVVXV1dYWFhZWVlbW1tcXFxtbW1RUVFSUlJUVFRaWlpcXFxkZGRlZWUaGhpeXl5iYmJjY2NmZmZlZWVoaGheXl5fX19lZWVnZ2d0dHRra2t1dXVpaWlqampvb29ycnJtbW1zc3N0dHQAAAB1dXV2dnZvb29wcHBxcXFzc3N0dHR1dXUSEhIAAAAAAAAAAAAMDAwAAAAICAgICAhpaWlqampra2tsbGxtbW1ubm5paWlqampra2ttbW1ubm5vb29xcXEAAABpaWlqampycnIAAAAEBAQAAAAAAAADAwMEBAQEBAQAAAABAQEAAAABAQEAAAAAAAAAAAAAAAAE45KzAAAAn3RSTlMAAQIDBAYHCAkKCwwODxEVFhgZGhsgISgpLC0wMTI2O0BHSktMVldYWVtcXmFjaG5vcnOBgpSVpKiztLS1tba3uLq8vLy/v7+/v7+/v7+/v7+/v8DAwMDAwMDBwcHBwcLCw8PDw8PExMXFxcXGxsbHx8fIyMjIyMjJz9HS0tTZ2t7e3t7e3t/f39/f39/g4ODg4ePm5+rt7vLy9Pf4+fwl+fc0AAACVElEQVQ4y32UzU8TYRDGn5ndfsXWUBODpAdjjR8Ek9KCBxP+BE+GePDCxYRoMBwg3PTg/wFciAdM5Kyc9Wg8kUiCQmiDbAKmNKVlP97Hw/Zjt1Dn8uad+e2Tmdl3BhiwRGLQY8WvN8pvn542WzGfxG4332UNtPneGaqSfTP6c6/WHLv73Y14NYpPF/dP7o2f/C5OW0OQytz5V1543rfzuamrkdJrf7N4AtaLm/6r0lVIcRFrE8cE6EysYbF4GRlbkfXHNSFB1qbXZWVsEBlZTm1X/tAQIOBMbaeWR+JFp17e2cPpOYCCHgK+n28Vbv0IIipSnmzs1Bv9FBv1ncZkWSJIZd7dyp+RIACQZD2/5c5X+sj4AjceOAYwMIQBCB4/3ODCeBfRJayWqkRXJbTD0iqWNERELcwcoIsQxtCQ3J+BpRIiFgDTCUeUCMASQCFqY6jZKlCIWp2PeFnJUoENqAI0ECPoMCAIigljNkS050bv6OSiIlBABF13RIUkw5gdHn2mh4V/RuKvbogpAHioZXvVuOxUlqvC6yEHcHLsGJLdXHIO9nvIZ8wGhWzYj+uZMNVsIZjFFwCwAfJo9/6TT6O3AQBVeSQA4FSfpXePSEBgJdOZ3PPiFXn++njWaruBQBPpdCaZf3EtPt5B88Nft9Vue0YgdiadTqRsleh8k8a/8Nrtlk8bYOCpwEsOIK7xXS8gYIPGUwtUX6JtNKRxfd8zhA3QuAiMWBpTMQE93zUM94tYmrBEBxDDwDNBB4GIiqpE9hHB8AX3t5RAZKAr8Xn4v/0DIrU+ffp+96AAAAAASUVORK5CYII=);
+  border: none;
+  background-size: 17px 19px;
+  width: 17px;
+  height: 19px;
+  outline: none;
+}
+
 .editor-component {
   -webkit-font-smoothing: antialiased;
   display: flex;
@@ -64,26 +88,37 @@ html, body, #root {
       width: 320px;
       overflow: auto;
 
-      .title {
-        display: block;
-        width: 100%;
-        padding: 10px;
-        background-color: #333333;
-        font-weight: 500;
-        font-size: 14px;
-      }
-
       .options-component {
+        margin: 15px 15px 20px 15px;
         padding: 0;
         text-align: left;
+        border: 1px solid #191919;
+        background-color: rgba(0,0,0,0.2);
+        box-shadow: 0px 1px 0px 0px rgba(255,255,255,0.1);
+        border-radius: 3px;
+        overflow: hidden;
+
+        .title {
+          display: block;
+          width: 100%;
+          padding: 6px 10px 8px 10px;
+          background: #131313;
+          font-weight: 500;
+          font-size: 14px;
+        }
 
         .option {
           display: block;
           width: 100%;
           padding: 10px;
-          font-size: 13px;
+          font-size: 12px;
+          line-height: 12px;
           color: rgba(255, 255, 255, 0.5);
           border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+
+          &:last-child {
+            border-bottom: none;
+          }
 
           .wrapper {
             display: flex;
@@ -93,12 +128,29 @@ html, body, #root {
           .label {
             display: inline-block;
             width: 100px;
+            font-weight: 500;
             vertical-align: middle;
           }
 
           .value {
+            display: flex;
             flex-grow: 1;
             vertical-align: middle;
+
+            .value-option {
+              flex-shrink: 1;
+              display: inline-block;
+              vertical-align: middle;
+            }
+
+            .value-hint {
+              min-width: 30px;
+              display: inline-block;
+              margin: 0 0 0 10px;
+              color: rgba(255, 255, 255, 0.5);
+              font-size: 11px;
+              vertical-align: middle;
+            }
           }
 
           .number-option {
@@ -115,6 +167,29 @@ html, body, #root {
             border: none;
             outline: none;
             color: #FFFFFF;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            overflow: hidden;
+          }
+
+          .range-option {
+            @include range-track();
+
+            &::-webkit-slider-thumb {
+              @include range-thumb();
+            }
+
+            &::-moz-range-track {
+              @include range-track();
+            }
+
+            &::-moz-range-thumb {
+              @include range-thumb();
+            }
+
+            &::-moz-focus-outer {
+              border: 0;
+            }
           }
 
           &.is-disabled {

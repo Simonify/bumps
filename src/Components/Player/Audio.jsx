@@ -38,10 +38,15 @@ function releaseAudioNode() {
 }
 
 export default class AudioPlayerComponent extends Component {
+  static defaultProps = {
+    volume: 100
+  };
+
   static propTypes = {
     defaultPosition: PropTypes.number.isRequired,
     onChangePosition: React.PropTypes.func.isRequired,
     onReady: PropTypes.func.isRequired,
+    volume: React.PropTypes.number.isRequired,
     audio: PropTypes.object,
     onError: PropTypes.func
   };
@@ -67,11 +72,31 @@ export default class AudioPlayerComponent extends Component {
   }
 
   componentWillReceiveProps(props) {
-    if (!is(this.props.audio, props.audio)) {
-      const state = this._getStateFromProps(props);
+    let audioVolumeChanged = false;
 
-      if (this.state.videoId !== state.videoId || !is(this.state.video, state.video)) {
-        this.setState(state, this._load);
+    if (!is(this.props.audio, props.audio)) {
+      const oldUrl = this.props.audio && this.props.audio.get('url');
+      const newUrl = props.audio && props.audio.get('url');
+
+      if (newUrl !== oldUrl){
+        console.log('changed yo');
+        const state = this._getStateFromProps(props);
+
+        if (this.state.videoId !== state.videoId) {
+          this.setState(state, this._load);
+        }
+      }
+
+      if (this.props.audio.get('volume') !== props.audio.get('volume')) {
+        audioVolumeChanged = true;
+      }
+    }
+
+    if (audioVolumeChanged || this.props.volume !== props.volume) {
+      const volume = this._getVolume(props);
+      console.log(volume);
+      if (this._audioPlayer) {
+        this._audioPlayer.setVolume(volume);
       }
     }
   }
@@ -238,6 +263,11 @@ export default class AudioPlayerComponent extends Component {
   _onReady() {
     console.log('yt ready');
     this._loaded = true;
+
+    if (this._audioPlayer) {
+      this._audioPlayer.setVolume(this._getVolume(this.props));
+    }
+
     this.props.onReady(this);
   }
 
@@ -251,6 +281,20 @@ export default class AudioPlayerComponent extends Component {
 
   _onFinished() {
     /* hrm */
+  }
+
+  _getVolume(props) {
+    let sourceVolume = props.audio.get('volume');
+
+    if (sourceVolume === 0) {
+      return 0;
+    }
+
+    if (typeof sourceVolume !== 'number') {
+      sourceVolume = 100;
+    }
+
+    return (props.volume / 100) * sourceVolume;
   }
 
   _destroy() {
