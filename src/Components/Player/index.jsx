@@ -30,9 +30,10 @@ export default class PlayerComponent extends Component {
     super(props, context);
     this._loadId = 0;
     this._onChangePosition = ::this._onChangePosition;
-
+    this._onAnimationFrame = ::this._onAnimationFrame;
     this._setAudioRef = ::this._setAudioRef;
     this._onAudioReady = ::this._onAudioReady;
+    this._onAudioPlaying = ::this._onAudioPlaying;
     this._onVideoChanged = ::this._onVideoChanged;
 
     this.state = {
@@ -61,14 +62,6 @@ export default class PlayerComponent extends Component {
         const sortedSegments = sortSegments(segments, props.bump.get('order'));
         const segment = getSegmentForPosition({ segments: sortedSegments });
         this.setState({ segment, sortedSegments });
-      }
-    }
-
-    if (this.props.playing !== props.playing) {
-      if (props.playing) {
-        this._play(props);
-      } else {
-        this._pause(props);
       }
     }
   }
@@ -102,8 +95,10 @@ export default class PlayerComponent extends Component {
           key={this.props.bump.get('id') + 'audio'}
           ref={this._setAudioRef}
           volume={this.props.volume}
+          playing={this.props.playing}
           audio={this.props.bump.get('audio')}
           onReady={this._onAudioReady}
+          onPlay={this._onAudioPlaying}
           onError={this._onAudioError}
           onVideoChanged={this._onVideoChanged}
           defaultPosition={this.state.position}
@@ -211,39 +206,21 @@ export default class PlayerComponent extends Component {
   _isReady() {
     this.setState({ ready: true });
 
-    if (this.props.playing) {
-      this._play();
-    } else {
+    if (!this.props.playing) {
       this._seek();
     }
   }
 
-  _play(props = this.props) {
+  _onAudioPlaying(position) {
     if (this.state.ready) {
-      const loadId = this._loadId;
-      this._playing = true;
-      this._audioRef.play().then((position) => {
-        if (typeof position === 'number') {
-          this.setState({ position });
-        }
+      if (typeof position === 'number') {
+        this.setState({ position });
+      }
 
-        if (loadId === this._loadId) {
-          this._start = Date.now();
-          this._ts = Date.now();
+      this._start = Date.now();
+      this._ts = Date.now();
 
-          const _onAnimationFrame = () => {
-            this._onAnimationFrame(draw);
-          };
-
-          const draw = () => {
-            if (loadId === this._loadId) {
-              window.requestAnimationFrame(_onAnimationFrame);
-            }
-          };
-
-          draw();
-        }
-      });
+      window.requestAnimationFrame(this._onAnimationFrame);
     }
   }
 
@@ -258,17 +235,6 @@ export default class PlayerComponent extends Component {
     }
   }
 
-  _pause(props = this.props) {
-    if (this.state.ready) {
-      if (this._playing) {
-        this._playing = false;
-        return this._audioRef.pause();
-      } else {
-        return Promise.resolve();
-      }
-    }
-  }
-
   _onChangePosition(position) {
     const segments = this.state.sortedSegments;
     const segment = getSegmentForPosition({ segments, position });
@@ -276,7 +242,7 @@ export default class PlayerComponent extends Component {
     this.props.onChangePosition && this.props.onChangePosition(position);
   }
 
-  _onAnimationFrame(draw) {
+  _onAnimationFrame() {
     if (this.state.ready && this.props.playing) {
       const duration = this.props.bump.get('duration');
       const now = Date.now();
@@ -286,7 +252,7 @@ export default class PlayerComponent extends Component {
 
       const position = Math.min(this.state.position + diff, duration);
 
-      if (position >= this.props.bump.getIn(['audio', 'duration'])) {
+      if (position < duration && position >= this.props.bump.getIn(['audio', 'duration'])) {
         if (this._audioRef.playing) {
           this._audioRef.pause();
         }
@@ -299,7 +265,7 @@ export default class PlayerComponent extends Component {
       this.props.onChangePosition && this.props.onChangePosition(position);
 
       if (position < duration) {
-        draw();
+        window.requestAnimationFrame(this._onAnimationFrame);
       } else {
         this.props.onFinished && this.props.onFinished();
       }

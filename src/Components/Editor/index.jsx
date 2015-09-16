@@ -189,9 +189,9 @@ export default class EditorComponent extends Component {
         label: 'Duration',
         type: EditorConstants.NUMBER,
         property: 'duration',
-        min: 0.2,
+        min: 0.1,
         validate(number) {
-          return round(number, 1);
+          return round(number, 3);
         }
       })
     ]);

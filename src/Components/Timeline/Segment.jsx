@@ -159,7 +159,7 @@ export default class TimelineSegmentComponent extends Component {
     }
 
     const duration = this._dragDuration;
-    const newDuration = Math.max(duration + (diff / 100), 0.2) // minimum duration
+    const newDuration = Math.max(duration + (diff / 100), 0.1) // minimum duration
 
     this._dragDuration = newDuration;
     this._mouseX = event.clientX;
@@ -185,7 +185,7 @@ export default class TimelineSegmentComponent extends Component {
     if (this._node) {
       if (this._dragDuration !== this.props.duration) {
         this.props.onChange(
-          this.props.segment.set('duration', round(this._dragDuration, 1))
+          this.props.segment.set('duration', round(this._dragDuration, 3))
         );
       }
     }

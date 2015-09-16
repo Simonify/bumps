@@ -95,7 +95,6 @@ export default class EditorOptionsComponent extends Component {
         );
         break;
       case EditorConstants.BOOLEAN:
-        console.log(value);
         control = (
           <input
             type="checkbox"

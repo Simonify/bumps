@@ -5,6 +5,7 @@ import HTML5Backend from 'react-dnd/modules/backends/HTML5';
 import { shouldComponentUpdate } from 'react-immutable-render-mixin';
 import * as TypeConstants from 'bumps/Constants/EditorConstants';
 import * as ItemTypeConstants from 'bumps/Constants/ItemTypeConstants';
+import round from 'bumps/Utils/round';
 import TimelineSegmentComponent from './Segment';
 
 const timelineTarget = {
@@ -163,17 +164,18 @@ export default class TimelineComponent extends Component {
         const duration = segment.get('duration');
         const position = this.props.position;
         const trackerPosition = this._getWidthForDuration(position);
-        const segmentLeft = node.offsetLeft - node.parentNode.offsetLeft;
+        const segmentLeft = node.offsetLeft - 1 - node.parentNode.offsetLeft;
 
         if (trackerPosition > segmentLeft) {
           const diff = (trackerPosition - segmentLeft);
-          let newDuration = this._getDurationFromWidth(diff);
+          let newDuration = round(this._getDurationFromWidth(diff), 3);
           let durationDiff;
 
           if (fromStart) {
             newDuration = duration - newDuration;
             durationDiff = duration - newDuration;
           }
+
 
           if (newDuration !== duration) {
             if (fromStart) {

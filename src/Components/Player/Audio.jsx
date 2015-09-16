@@ -43,9 +43,11 @@ export default class AudioPlayerComponent extends Component {
   };
 
   static propTypes = {
+    playing: PropTypes.bool.isRequired,
     defaultPosition: PropTypes.number.isRequired,
     onChangePosition: React.PropTypes.func.isRequired,
     onReady: PropTypes.func.isRequired,
+    onPlay: PropTypes.func.isRequired,
     onVideoChanged: PropTypes.func.isRequired,
     volume: React.PropTypes.number.isRequired,
     audio: PropTypes.object,
@@ -100,6 +102,14 @@ export default class AudioPlayerComponent extends Component {
       const volume = this._getVolume(props);
       this._setYouTubeVolume(volume);
     }
+
+    if (this.props.playing !== props.playing) {
+      if (props.playing) {
+        this._play();
+      } else {
+        this.pause();
+      }
+    }
   }
 
   componentWillUnmount() {
@@ -111,7 +121,7 @@ export default class AudioPlayerComponent extends Component {
     return <span className="audio-player-component" />;
   }
 
-  play() {
+  _play() {
     if (!this.props.audio) {
       return Promise.resolve();
     }
@@ -126,28 +136,22 @@ export default class AudioPlayerComponent extends Component {
     }
 
     if (this.playing) {
-      return Promise.resolve();
+      return;
     }
 
     this.playing = true;
 
-    return new Promise((resolve, reject) => {
-      if (this.state.videoId) {
-        this._playPromise = { resolve, reject };
-
-        if (this._loaded) {
-          if (this._hasPausedOnce) {
-            this._playYouTube();
-          }
-
-          this._seekYouTube(
-            (this.props.audio.get('start') || 0) + this.props.defaultPosition
-          );
+    if (this.state.videoId) {
+      if (this._loaded) {
+        if (this._hasPausedOnce) {
+          this._playYouTube();
         }
-      } else {
-        resolve();
+
+        this._seekYouTube(
+          (this.props.audio.get('start') || 0) + this.props.defaultPosition
+        );
       }
-    });
+    }
   }
 
   seek() {
@@ -171,8 +175,6 @@ export default class AudioPlayerComponent extends Component {
         }
       }
     }
-
-    return Promise.resolve();
   }
 
   _getStateFromProps({ audio }) {
@@ -227,16 +229,9 @@ export default class AudioPlayerComponent extends Component {
   _onVideoStateChange(event) {
     if (event.data === window.YT.PlayerState.PLAYING) {
       const position = this._audioPlayer.getCurrentTime() - (this.props.audio.get('start') || 0);
-      this._startTracking(position);
+      this.props.onPlay(position);
     } else if (event.data === 0) {
       this._onFinished();
-    }
-  }
-
-  _startTracking(position) {
-    if (this._playPromise) {
-      this._playPromise.resolve(position);
-      this._playPromise = null;
     }
   }
 
