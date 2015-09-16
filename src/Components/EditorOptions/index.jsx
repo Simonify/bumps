@@ -122,12 +122,12 @@ export default class EditorOptionsComponent extends Component {
 
   _onChangeOption(option, event) {
     const property = option.get('property');
-    let path = [property];
     let mutated = this.props.map;
+    let path = [];
     let value;
 
     if (this.props.keyPath) {
-      path = [].concat(this.props.keyPath).concat(path);
+      path = path.concat(this.props.keyPath);
     }
 
     switch (option.get('type')) {
@@ -145,12 +145,16 @@ export default class EditorOptionsComponent extends Component {
         break;
     }
 
+    const valuePath = path.concat([property]);
+    const oldValue = this.props.map.getIn(valuePath);
+
     if (option.has('validator')) {
-      value = option.get('validator')(this.props.map.getIn(path), value);
+      value = option.get('validator')(oldValue, value, this.props.map.getIn(path));
     }
 
-    mutated = mutated.setIn(path, value);
-
-    this.props.onChange(mutated);
+    if (value !== oldValue) {
+      mutated = mutated.setIn(valuePath, value);
+      this.props.onChange(mutated);
+    }
   }
 }

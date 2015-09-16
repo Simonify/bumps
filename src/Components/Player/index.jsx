@@ -3,6 +3,7 @@ import React, { Component } from 'react';
 import { shouldComponentUpdate } from 'react-immutable-render-mixin';
 import * as TypeConstants from 'bumps/Constants/TypeConstants';
 import getSegmentForPosition from 'bumps/Utils/getSegmentForPosition';
+import sortSegments from 'bumps/Utils/sortSegments';
 import SegmentComponent from 'bumps/Components/Segment';
 import AudioPlayerComponent from './Audio';
 
@@ -28,19 +29,22 @@ export default class PlayerComponent extends Component {
   constructor(props, context) {
     super(props, context);
     this._loadId = 0;
+    this._onChangePosition = ::this._onChangePosition;
+
     this._setAudioRef = ::this._setAudioRef;
     this._onAudioReady = ::this._onAudioReady;
-    this._onChangePosition = ::this._onChangePosition;
-    this._onAnimationFrame = ::this._onAnimationFrame;
+    this._onVideoChanged = ::this._onVideoChanged;
+
     this.state = {
       ready: false,
       position: props.defaultPosition,
-      segment: null
+      segment: null,
+      sortedSegments: null
     };
   }
 
   componentDidMount() {
-    this._preload(this.props);
+    this._initializeBump(this.props);
   }
 
   componentWillReceiveProps(props) {
@@ -48,19 +52,15 @@ export default class PlayerComponent extends Component {
     const newId = props.bump && props.bump.get('id');
 
     if (oldId !== newId) {
-      this._preload(props);
+      this._initializeBump(props);
       return;
-    } else if (this.state.segment) {
-      if (!is(this.props.bump.get('segments'), props.bump.get('segments'))) {
-        const segment = getSegmentForPosition(props.bump, this.state.position);
+    } else {
+      const segments = props.bump.get('segments');
 
-        if (
-          !segment ||
-          segment.get('id') !== this.state.segment.get('id') ||
-          !is(this.state.segment, segment)
-        ) {
-          this.setState({ segment });
-        }
+      if (this.props.bump.get('segments') !== segments) {
+        const sortedSegments = sortSegments(segments, props.bump.get('order'));
+        const segment = getSegmentForPosition({ segments: sortedSegments });
+        this.setState({ segment, sortedSegments });
       }
     }
 
@@ -91,9 +91,8 @@ export default class PlayerComponent extends Component {
         segment = this.renderSegment(this.state.segment);
       }
     } else {
-      segment = (
-        <div>Loading...</div>
-      )
+      className += ' is-loading';
+      segment = (<div className="loader" />);
     }
 
     return (
@@ -106,6 +105,7 @@ export default class PlayerComponent extends Component {
           audio={this.props.bump.get('audio')}
           onReady={this._onAudioReady}
           onError={this._onAudioError}
+          onVideoChanged={this._onVideoChanged}
           defaultPosition={this.state.position}
           onChangePosition={this._onChangePosition}
         />
@@ -117,8 +117,14 @@ export default class PlayerComponent extends Component {
     return <SegmentComponent segment={segment} />;
   }
 
-  _preload({ preload, bump }) {
-    this._loadId = ++LOAD_IDS;
+  _initializeBump({ preload, bump }) {
+    /** Reset state **/
+    const loadId = this._loadId = ++LOAD_IDS;
+    const sortedSegments = sortSegments(bump.get('segments'), bump.get('order'));
+
+    this._preLoaded = false;
+    this._audioReady = false;
+    this.setState({ ready: false, segment: null, sortedSegments });
 
     const promises = [];
     const loaded = {};
@@ -128,13 +134,19 @@ export default class PlayerComponent extends Component {
         default:
           break;
         case TypeConstants.IMAGE:
-          if (segment.get('url')) {
-            promises.push(new Promise((resolve, reject) => {
-              const image = new Image();
-              image.onload = resolve;
-              image.onerror = resolve;
-              image.src = segment.get('url');
-            }));
+          const url = segment.get('url');
+
+          if (url) {
+            if (!loaded[url]) {
+              loaded[url] = true;
+
+              promises.push(new Promise((resolve, reject) => {
+                const image = new Image();
+                image.onload = resolve;
+                image.onerror = resolve;
+                image.src = segment.get('url');
+              }));
+            }
           }
           break;
 
@@ -153,41 +165,51 @@ export default class PlayerComponent extends Component {
       }
     });
 
-    const onLoaded = () => {
-      this._preLoaded = true;
+    if (this.props.preload) {
+      Promise.all(promises).then(this._onAssetsLoaded.bind(this, loadId));
+    } else {
+      this._onAssetsLoaded(loadId);
+    }
+
+    this._audioRef.load();
+  }
+
+  _setAudioRef(ref) {
+    this._audioRef = ref;
+
+    if (!ref) {
+      this._audioReady = false;
+    }
+  }
+
+  _onAssetsLoaded(loadId) {
+    if (loadId === this._loadId) {
+      this._assetsLoaded = true;
 
       if (this._audioReady) {
         this._isReady();
       }
-    };
-
-    if (!preload) {
-      onLoaded();
-      return null;
     }
-
-    this.setState({ ready: false });
-    this._preLoaded = false;
-
-    const promise = Promise.all(promises);
-    promise.then(onLoaded);
-
-    return promise;
   }
 
-  _onAudioReady() {
-    this._audioReady = true;
+  _onAudioReady(ref) {
+    if (ref === this._audioRef) {
+      this._audioReady = true;
 
-    const loadId = this._loadId;
-
-    if (this._preLoaded) {
-      this._isReady();
+      if (this._assetsLoaded) {
+        this._isReady();
+      }
     }
+  }
+
+  _onVideoChanged() {
+    this.setState({ ready: false });
+    this._audioReady = false;
   }
 
   _isReady() {
     this.setState({ ready: true });
-    /** Audio track is ready **/
+
     if (this.props.playing) {
       this._play();
     } else {
@@ -196,15 +218,30 @@ export default class PlayerComponent extends Component {
   }
 
   _play(props = this.props) {
-    if (this.state.ready && !this._playing) {
+    if (this.state.ready) {
+      const loadId = this._loadId;
       this._playing = true;
+      this._audioRef.play().then((position) => {
+        if (typeof position === 'number') {
+          this.setState({ position });
+        }
 
-      this.setState({ position: props.defaultPosition }, () => {
-        this._audioRef.play().then(() => {
+        if (loadId === this._loadId) {
           this._start = Date.now();
           this._ts = Date.now();
-          window.requestAnimationFrame(this._onAnimationFrame);
-        });
+
+          const _onAnimationFrame = () => {
+            this._onAnimationFrame(draw);
+          };
+
+          const draw = () => {
+            if (loadId === this._loadId) {
+              window.requestAnimationFrame(_onAnimationFrame);
+            }
+          };
+
+          draw();
+        }
       });
     }
   }
@@ -212,7 +249,8 @@ export default class PlayerComponent extends Component {
   _seek() {
     if (this.state.ready) {
       const position = this.props.defaultPosition;
-      const segment = getSegmentForPosition(this.props.bump, position);
+      const segments = this.state.sortedSegments;
+      const segment = getSegmentForPosition({ segments, position });
 
       this.setState({ position, segment });
       return this._audioRef.seek();
@@ -230,25 +268,19 @@ export default class PlayerComponent extends Component {
     }
   }
 
-  _setAudioRef(ref) {
-    if (!ref) {
-      this._audioReady = false;
-    }
-
-    this._audioRef = ref;
-  }
-
   _onChangePosition(position) {
-    const segment = getSegmentForPosition(this.props.bump, position);
+    const segments = this.state.sortedSegments;
+    const segment = getSegmentForPosition({ segments, position });
     this.setState({ position, segment });
     this.props.onChangePosition && this.props.onChangePosition(position);
   }
 
-  _onAnimationFrame() {
-    if (this.props.playing) {
+  _onAnimationFrame(draw) {
+    if (this.state.ready && this.props.playing) {
       const duration = this.props.bump.get('duration');
       const now = Date.now();
       const diff = (now - this._ts) / 1000;
+
       this._ts = now;
 
       const position = Math.min(this.state.position + diff, duration);
@@ -259,13 +291,14 @@ export default class PlayerComponent extends Component {
         }
       }
 
-      const segment = getSegmentForPosition(this.props.bump, position);
+      const segments = this.state.sortedSegments;
+      const segment = getSegmentForPosition({ segments, position });
 
       this.setState({ position, segment });
       this.props.onChangePosition && this.props.onChangePosition(position);
 
       if (position < duration) {
-        window.requestAnimationFrame(this._onAnimationFrame);
+        draw();
       } else {
         this.props.onFinished && this.props.onFinished();
       }

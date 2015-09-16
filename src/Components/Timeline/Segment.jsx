@@ -111,14 +111,16 @@ export default class TimelineSegmentComponent extends Component {
 
     return connectDragSource(connectDropTarget(
       <div data-id={segment.get('id')} className={className} style={style} onClick={onClick}>
-        <div className="drag-left" onMouseDown={this._startResize.bind(this, true)} />
-        <span className="type">
-          {segment.get('type')}
-        </span>
-        <span className="label">
-          {segment.get('label')}
-        </span>
-        <div className="drag-right" onMouseDown={this._startResize.bind(this, false)} />
+        <div className="inner">
+          <div className="drag-left" onMouseDown={this._startResize.bind(this, true)} />
+          <span className="type">
+            {segment.get('type')}
+          </span>
+          <span className="label">
+            {segment.get('label')}
+          </span>
+          <div className="drag-right" onMouseDown={this._startResize.bind(this, false)} />
+        </div>
       </div>
     ));
   }

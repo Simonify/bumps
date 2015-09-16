@@ -14,6 +14,7 @@ function render() {
 }
 
 onChange = (_bump) => {
+  console.log('Bump mutated',_bump.toJS());
   bump = _bump;
   window.localStorage.setItem('bump', JSON.stringify(bump.toJS()));
   render();

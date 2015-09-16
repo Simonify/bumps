@@ -10,8 +10,23 @@ export default new List([
 
   new Map({
     type: NUMBER,
+    defaultValue: 0,
     label: 'Seek',
     property: 'start'
+  }),
+
+  new Map({
+    type: NUMBER,
+    defaultValue: 0,
+    label: 'Duration',
+    property: 'duration',
+    validator(oldVal, newVal, map) {
+      if (map.get('url')) {
+        return newVal;
+      }
+
+      return 0;
+    }
   }),
 
   new Map({

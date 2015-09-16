@@ -108,7 +108,7 @@ export default class TimelineComponent extends Component {
         let duration = audio.get('duration');
 
         if (typeof duration !== 'number') {
-          number = this.props.bump.get('duration');
+          duration = this.props.bump.get('duration');
         }
 
         const width = this._getWidthForDuration(duration);
@@ -126,6 +126,10 @@ export default class TimelineComponent extends Component {
   }
 
   _getWidthForDuration(duration) {
+    if (!duration) {
+      return 0;
+    }
+    
     return ((duration * this.state.zoom) * 100);
   }
 
@@ -186,7 +190,9 @@ export default class TimelineComponent extends Component {
           this.props.toggleState();
           break;
         case 8:
-          this.props.removeSegment(this.props.selectedSegmentId);
+          if (this.props.selectedSegmentId) {
+            this.props.removeSegment(this.props.selectedSegmentId);
+          }
           break;
       }
 

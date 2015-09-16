@@ -18,7 +18,10 @@ const emptyBump = () => {
   return new Map({
     id: `bump-${++bumps}`,
     name: 'Untitled bump',
-    segments: new List([])
+    duration: 0,
+    order: new List(),
+    segments: new Map(),
+    audio: new Map({ type: TypeConstants.YOUTUBE, start: 0, duration: 0 })
   });
 };
 
@@ -45,6 +48,7 @@ export default class EditorComponent extends Component {
     this._onClickExport = ::this._onClickExport;
     this._onClickImport = ::this._onClickImport;
     this._onClickShare = ::this._onClickShare;
+    this._onClickReset = ::this._onClickReset;
     this._onChangeTimelinePosition = ::this._onChangeTimelinePosition;
     this.state = {
       position: 0,
@@ -161,7 +165,7 @@ export default class EditorComponent extends Component {
             map={this.props.bump}
             keyPath={['audio']}
             options={audioEditorOptions}
-            onChange={this._onChangeBump}
+            onChange={this._onChangeAudio}
           />
         </div>
       );
@@ -289,6 +293,9 @@ export default class EditorComponent extends Component {
         <a href="#" className="control-option" onClick={this._onClickShare}>
           Share
         </a>
+        <a href="#" className="control-option" onClick={this._onClickReset}>
+          Reset
+        </a>
       </div>
     );
   }
@@ -313,7 +320,11 @@ export default class EditorComponent extends Component {
   _setPosition(position) {
     this.setState({
       position,
-      segment: getSegmentForPosition(this.props.bump, position)
+      segment: getSegmentForPosition({
+        segments: this.props.bump.get('segments'),
+        order: this.props.bump.get('order'),
+        position
+      })
     });
   }
 
@@ -364,7 +375,7 @@ export default class EditorComponent extends Component {
 
   _getDuration(bump) {
     const segmentsDuration = this._getSegmentsDuration(bump.get('segments'));
-    const audioDuration = bump.getIn(['audio', 'duration']);
+    const audioDuration = bump.getIn(['audio', 'duration']) || 0;
     return Math.max(segmentsDuration, audioDuration);
   }
 
@@ -376,8 +387,17 @@ export default class EditorComponent extends Component {
 
   _onChangeAudio(updated) {
     let bump = this.props.bump;
-    bump = bump.set('audio', updated);
+    let audio = updated.has('audio') ? updated.get('audio') : updated;
+
+    if (!bump.getIn(['audio', 'url']) && audio.get('url')) {
+      if (!audio.get('duration')) {
+        audio = audio.set('duration', 10);
+      }
+    }
+
+    bump = bump.set('audio', audio);
     bump = bump.set('duration', this._getDuration(bump));
+
     this._onChangeBump(bump);
   }
 
@@ -385,7 +405,6 @@ export default class EditorComponent extends Component {
     let bump = this.props.bump;
     let order = bump.get('order');
     let segments = bump.get('segments');
-    const segment = segments.get(id);
 
     order = order.remove(order.indexOf(id));
     segments = segments.remove(id);
@@ -417,16 +436,14 @@ export default class EditorComponent extends Component {
     let bump = this.props.bump;
     let order = bump.get('order');
     let segments = bump.get('segments');
-    let duration = bump.get('duration');
     let label = type + ' seg';
 
     order = order.push(id);
     segments = segments.set(id, new Map({ id, type, label, duration: 1 }));
-    duration = duration + 1;
 
     bump = bump.set('order', order);
     bump = bump.set('segments', segments);
-    bump = bump.set('duration', duration);
+    bump = bump.set('duration', this._getDuration(bump));
 
     this._onChangeBump(bump);
   }
@@ -460,5 +477,13 @@ export default class EditorComponent extends Component {
     event.preventDefault();
     const bump = window.encodeURIComponent(window.JSON.stringify(this.props.bump.toJS()));
     window.open(`http://simonify.github.io/bumps/examples/player/#${bump}`)
+  }
+
+  _onClickReset(event) {
+    event.preventDefault();
+
+    if (window.confirm('Are you sure you want to reset? This will remove any changes you have made.')) {
+      this.props.onChange(emptyBump());
+    }
   }
 }

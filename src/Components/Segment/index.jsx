@@ -38,14 +38,14 @@ export default class SegmentComponent extends Component {
         if (segment.get('small') === true) {
           return (
             <div className="segment-type segment-logo segment-logo-small">
-              <img src="http://i.imgur.com/zwx39CO.png" className="image" />
+              <img key="logo-small" src="http://i.imgur.com/zwx39CO.png" className="image" />
             </div>
           );
         }
 
         return (
           <div className="segment-type segment-logo">
-            <img src="http://i.imgur.com/tmemlQd.png" className="image" />
+            <img key="logo-big" src="http://i.imgur.com/tmemlQd.png" className="image" />
           </div>
         );
       case TypeConstants.IMAGE:
@@ -60,7 +60,7 @@ export default class SegmentComponent extends Component {
 
           return (
             <div className={className}>
-              <img src={segment.get('url')} className="image" />
+              <img key={url} src={url} className="image" />
             </div>
           );
         } else {
