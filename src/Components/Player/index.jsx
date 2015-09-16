@@ -60,7 +60,11 @@ export default class PlayerComponent extends Component {
 
       if (this.props.bump.get('segments') !== segments) {
         const sortedSegments = sortSegments(segments, props.bump.get('order'));
-        const segment = getSegmentForPosition({ segments: sortedSegments });
+        const segment = getSegmentForPosition({
+          segments: sortedSegments,
+          position: this.state.position
+        });
+        
         this.setState({ segment, sortedSegments });
       }
     }
@@ -254,7 +258,7 @@ export default class PlayerComponent extends Component {
 
       if (position >= this.props.bump.getIn(['audio', 'duration'])) {
         // Pause the audio ASAP.
-        
+
         if (this._audioRef.playing) {
           this._audioRef.pause();
         }
