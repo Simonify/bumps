@@ -149,6 +149,9 @@ export default class EditorComponent extends Component {
       return (
         <div className="editor">
           {this.renderSegmentEditorOptions(segmentId)}
+          <div className="btn delete" onClick={this._onRemoveSegment.bind(this, segmentId)}>
+            Delete Segment
+          </div>
         </div>
       );
     } else {

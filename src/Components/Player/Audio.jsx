@@ -305,7 +305,7 @@ export default class AudioPlayerComponent extends Component {
 
   _setYouTubeVolume(volume) {
     if (this._audioPlayer) {
-      console.log('#_setYouTubeVolume', volume);
+      console.trace('#_setYouTubeVolume', volume);
       this._audioPlayer.setVolume(volume);
     } else {
       console.error('#_setYouTubeVolume', 'Tried to set YT volume when no player exists.');
@@ -314,7 +314,7 @@ export default class AudioPlayerComponent extends Component {
 
   _playYouTube() {
     if (this._audioPlayer) {
-      console.log('#_playYouTube');
+      console.trace('#_playYouTube');
       this._audioPlayer.playVideo();
     } else {
       console.error('#_playYouTube', 'Tried to play YT when no player exists.');
@@ -323,7 +323,7 @@ export default class AudioPlayerComponent extends Component {
 
   _pauseYouTube() {
     if (this._audioPlayer) {
-      console.log('#_pauseYouTube');
+      console.trace('#_pauseYouTube');
       this._audioPlayer.pauseVideo();
     } else {
       console.error('#_pauseYouTube', 'Tried to pause YT when no player exists.');
@@ -332,7 +332,7 @@ export default class AudioPlayerComponent extends Component {
 
   _seekYouTube(seek) {
     if (this._audioPlayer) {
-      console.log('#_seekYouTube', seek);
+      console.trace('#_seekYouTube', seek);
       this._audioPlayer.seekTo(seek);
     } else {
       console.error('#_seekYouTube', 'Tried to seek YT when no player exists.');

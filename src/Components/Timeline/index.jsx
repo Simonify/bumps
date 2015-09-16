@@ -33,6 +33,7 @@ export default class TimelineComponent extends Component {
 
   constructor(props, context) {
     super(props, context);
+    this._segmentRef = {};
     this._onClick = ::this._onClick;
     this._onKeyDown = ::this._onKeyDown;
     this._stopTracker = ::this._stopTracker;
@@ -88,6 +89,7 @@ export default class TimelineComponent extends Component {
 
     return (
       <TimelineSegmentComponent
+        ref={this._setSegmentRef.bind(this, id)}
         key={id}
         segment={segment}
         findIndex={this._findIndex}
@@ -125,18 +127,64 @@ export default class TimelineComponent extends Component {
     }
   }
 
+  _setSegmentRef(id, ref) {
+    this._segmentRef[id] = ref;
+  }
+
   _getWidthForDuration(duration) {
     if (!duration) {
       return 0;
     }
-    
+
     return ((duration * this.state.zoom) * 100);
+  }
+
+  _getDurationFromWidth(width) {
+    if (!width) {
+      return 0;
+    }
+
+    return ((width / this.state.zoom) / 100);
   }
 
   _moveSegment(id, atIndex) {
     const index = this._findIndex(id);
     const order = this.props.bump.get('order').splice(index, 1).splice(atIndex, 0, id);
     this.props.onChangeBump(this.props.bump.set('order', order));
+  }
+
+  _trimSegment(id, fromStart) {
+    const segment = this.props.bump.getIn(['segments', id]);
+
+    if (segment) {
+      const node = this._segmentRef[id] && React.findDOMNode(this._segmentRef[id]);
+
+      if (node) {
+        const duration = segment.get('duration');
+        const position = this.props.position;
+        const trackerPosition = this._getWidthForDuration(position);
+        const segmentLeft = node.offsetLeft - node.parentNode.offsetLeft;
+
+        if (trackerPosition > segmentLeft) {
+          const diff = (trackerPosition - segmentLeft);
+          let newDuration = this._getDurationFromWidth(diff);
+          let durationDiff;
+
+          if (fromStart) {
+            newDuration = duration - newDuration;
+            durationDiff = duration - newDuration;
+          }
+
+          if (newDuration !== duration) {
+            if (fromStart) {
+              this.props.onChangePosition(position - durationDiff);
+            }
+
+            this.props.onChangeSegment(segment.set('duration', newDuration));
+          }
+        }
+      }
+    }
   }
 
   _onClick(event) {
@@ -192,6 +240,16 @@ export default class TimelineComponent extends Component {
         case 8:
           if (this.props.selectedSegmentId) {
             this.props.removeSegment(this.props.selectedSegmentId);
+          }
+          break;
+        case 219:
+          if (event.altKey) {
+            this._trimSegment(this.props.selectedSegmentId, true);
+          }
+          break;
+        case 221:
+          if (event.altKey) {
+            this._trimSegment(this.props.selectedSegmentId);
           }
           break;
       }
