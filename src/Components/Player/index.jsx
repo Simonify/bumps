@@ -64,7 +64,7 @@ export default class PlayerComponent extends Component {
           segments: sortedSegments,
           position: this.state.position
         });
-        
+
         this.setState({ segment, sortedSegments });
       }
     }
@@ -268,7 +268,13 @@ export default class PlayerComponent extends Component {
       const segment = getSegmentForPosition({ segments, position });
 
       if (position < duration) {
-        this.setState({ position, segment });
+        const state = { position };
+
+        if (segment !== this.state.segment) {
+          state.segment = segment;
+        }
+
+        this.setState(state);
         this.props.onChangePosition && this.props.onChangePosition(position);
         window.requestAnimationFrame(this._onAnimationFrame);
       } else {
