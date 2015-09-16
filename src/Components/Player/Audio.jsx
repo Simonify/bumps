@@ -67,6 +67,10 @@ export default class AudioPlayerComponent extends Component {
     return (!is(this.props.audio, props.audio));
   }
 
+  componentDidMount() {
+    window.setTimeout(this.load, 0);
+  }
+
   componentWillReceiveProps(props) {
     let audioVolumeChanged = false;
 

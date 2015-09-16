@@ -170,14 +170,13 @@ export default class PlayerComponent extends Component {
     } else {
       this._onAssetsLoaded(loadId);
     }
-
-    this._audioRef.load();
   }
 
   _setAudioRef(ref) {
     this._audioRef = ref;
 
     if (!ref) {
+      console.log('#audioReady', false);
       this._audioReady = false;
     }
   }
@@ -193,7 +192,9 @@ export default class PlayerComponent extends Component {
   }
 
   _onAudioReady(ref) {
+    console.log('#_onAudioReady');
     if (ref === this._audioRef) {
+      console.log('#audioReady', true);
       this._audioReady = true;
 
       if (this._assetsLoaded) {
