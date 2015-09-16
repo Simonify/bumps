@@ -95,7 +95,7 @@ export default class PlayerComponent extends Component {
           key={this.props.bump.get('id') + 'audio'}
           ref={this._setAudioRef}
           volume={this.props.volume}
-          playing={this.props.playing}
+          playing={this.state.ready && this.props.playing}
           audio={this.props.bump.get('audio')}
           onReady={this._onAudioReady}
           onPlay={this._onAudioPlaying}
@@ -252,7 +252,9 @@ export default class PlayerComponent extends Component {
 
       const position = Math.min(this.state.position + diff, duration);
 
-      if (position < duration && position >= this.props.bump.getIn(['audio', 'duration'])) {
+      if (position >= this.props.bump.getIn(['audio', 'duration'])) {
+        // Pause the audio ASAP.
+        
         if (this._audioRef.playing) {
           this._audioRef.pause();
         }
@@ -261,12 +263,13 @@ export default class PlayerComponent extends Component {
       const segments = this.state.sortedSegments;
       const segment = getSegmentForPosition({ segments, position });
 
-      this.setState({ position, segment });
-      this.props.onChangePosition && this.props.onChangePosition(position);
-
       if (position < duration) {
+        this.setState({ position, segment });
+        this.props.onChangePosition && this.props.onChangePosition(position);
         window.requestAnimationFrame(this._onAnimationFrame);
       } else {
+        this.setState({ position, segment: null });
+        this.props.onChangePosition && this.props.onChangePosition(position);
         this.props.onFinished && this.props.onFinished();
       }
     }
