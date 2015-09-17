@@ -14,7 +14,7 @@
   },
   "author": "Simon Fletcher <simon@wakecodesleep.com> (http://github.com/simonify)",
   "license": "MIT",
-  "devDependencies": {
+  "dependencies": {
     "babel-core": "^5.1.10",
     "babel-loader": "^5.0.0",
     "babel-runtime": "^5.8.24",
