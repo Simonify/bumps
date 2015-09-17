@@ -76,13 +76,17 @@ export default class AudioPlayerComponent extends Component {
   }
 
   componentWillReceiveProps(props) {
+    let audioChanged = !is(this.props.audio, props.audio);
     let audioVolumeChanged = false;
 
-    if (!is(this.props.audio, props.audio)) {
+    if (audioChanged) {
       const oldUrl = this.props.audio && this.props.audio.get('url');
       const newUrl = props.audio && props.audio.get('url');
+      audioChanged = (newUrl !== oldUrl);
 
-      if (newUrl !== oldUrl){
+      if (audioChanged) {
+        this.pause();
+
         const state = this._getStateFromProps(props);
 
         if (this.state.videoId !== state.videoId) {
@@ -105,11 +109,13 @@ export default class AudioPlayerComponent extends Component {
       this._setYouTubeVolume(volume);
     }
 
-    if (this.props.playing !== props.playing) {
-      if (props.playing) {
-        this._play(props);
-      } else {
-        this.pause();
+    if (!audioChanged) {
+      if (this.props.playing !== props.playing) {
+        if (props.playing) {
+          this._play(props);
+        } else {
+          this.pause();
+        }
       }
     }
   }
@@ -117,6 +123,7 @@ export default class AudioPlayerComponent extends Component {
   componentWillUnmount() {
     this._unmounted = true;
     this._destroy();
+    this._audioPlayer = null;
   }
 
   render() {
@@ -192,7 +199,9 @@ export default class AudioPlayerComponent extends Component {
       case TypeConstants.YOUTUBE:
         getYT().then((YT) => {
           if (this.props.persistYoutubePlayer === true && this._audioPlayer) {
-            this._audioPlayer.loadVideoById(videoId);
+            this._loaded = true;
+            this._awaitingCue = true;
+            this._audioPlayer.cueVideoById(videoId);
             return;
           }
 
@@ -223,6 +232,13 @@ export default class AudioPlayerComponent extends Component {
     if (event.data === window.YT.PlayerState.PLAYING) {
       const position = this._audioPlayer.getCurrentTime() - (this.props.audio.get('start') || 0);
       this.props.onPlay(position);
+    } else if (event.data == window.YT.PlayerState.CUED && this._awaitingCue) {
+      this._awaitingCue = false;
+      this.props.onReady(this);
+
+      if (this.props.playing) {
+        this._play();
+      }
     } else if (event.data === 0) {
       this._onFinished();
     }
@@ -273,9 +289,8 @@ export default class AudioPlayerComponent extends Component {
       if (this._audioPlayer) {
         if (this.props.persistYoutubePlayer !== true) {
           this._audioPlayer.destroy();
+          this._audioPlayer = null;
         }
-
-        this._audioPlayer = null;
       }
     }
   }

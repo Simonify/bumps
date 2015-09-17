@@ -62,7 +62,7 @@ export default class PlayerComponent extends Component {
     const newId = props.bump && props.bump.get('id');
 
     if (oldId !== newId) {
-      this._initializeBump(props);
+      this._initializeBump(props, this.props);
       return;
     } else {
       const segments = props.bump.get('segments');
@@ -124,7 +124,7 @@ export default class PlayerComponent extends Component {
       <div className={className}>
         {segment}
         <AudioPlayerComponent
-          key={this.props.bump.get('id') + 'audio'}
+          key="audio"
           ref={this._setAudioRef}
           volume={this.props.volume}
           persistYoutubePlayer={this.props.persistYoutubePlayer}
@@ -166,13 +166,38 @@ export default class PlayerComponent extends Component {
     return props.defaultPosition;
   }
 
-  _initializeBump({ preload, bump }) {
+  _initializeBump({ preload, bump }, oldProps) {
     /** Reset state **/
     const loadId = this._loadId = ++LOAD_IDS;
     const sortedSegments = sortSegments(bump.get('segments'), bump.get('order'));
 
     this._preLoaded = false;
-    this._audioReady = false;
+
+    /*
+     * I don't like this.
+     * ===
+     */
+      if (oldProps && oldProps.oldBump) {
+        const oldAudio = oldBump.get('audio');
+        const newAudio = oldProps.bump.get('audio');
+
+        if (!is(oldAudio, newAudio)) {
+          const oldUrl = oldAudio && oldAudio.get('url');
+          const newUrl = newAudio && newAudio.get('url');
+
+          if (oldUrl !== newUrl) {
+            this._audioReady = false;
+          }
+        }
+      }
+
+      if (this._audioReady) {
+        this._seekOnReady = true;
+      }
+    /*
+     * ====
+     */
+
     this.setState({ ready: false, segment: null, sortedSegments });
 
     const promises = [];
@@ -258,7 +283,8 @@ export default class PlayerComponent extends Component {
   _isReady() {
     this.setState({ ready: true });
 
-    if (!this.props.playing) {
+    if (this._seekOnReady || !this.props.playing) {
+      this._seekOnReady = false;
       this.seek();
     }
 
