@@ -137,6 +137,19 @@ export default class PlayerComponent extends Component {
     return <SegmentComponent key={segment.get('id')} segment={segment} />;
   }
 
+  seek(position) {
+    if (this.state.ready) {
+      const position = this.props.defaultPosition;
+      const segments = this.state.sortedSegments;
+      const segment = getSegmentForPosition({ segments, position });
+
+      this._seeking = true;
+      this.setState({ position, segment });
+
+      return this._audioRef.seek(position);
+    }
+  }
+
   _initializeBump({ preload, bump }) {
     /** Reset state **/
     const loadId = this._loadId = ++LOAD_IDS;
@@ -230,7 +243,7 @@ export default class PlayerComponent extends Component {
     this.setState({ ready: true });
 
     if (!this.props.playing) {
-      this._seek();
+      this.seek();
     }
   }
 
@@ -247,19 +260,6 @@ export default class PlayerComponent extends Component {
       this._ts = Date.now();
 
       window.requestAnimationFrame(this._onAnimationFrame);
-    }
-  }
-
-  _seek(position) {
-    if (this.state.ready) {
-      const position = this.props.defaultPosition;
-      const segments = this.state.sortedSegments;
-      const segment = getSegmentForPosition({ segments, position });
-
-      this._seeking = true;
-      this.setState({ position, segment });
-
-      return this._audioRef.seek(position);
     }
   }
 
