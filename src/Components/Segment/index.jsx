@@ -1,7 +1,7 @@
 import { Map, List } from 'immutable';
 import React, { Component } from 'react';
 import shouldPureComponentUpdate from 'react-pure-render/function';
-import * as TypeConstants from 'bumps/Constants/TypeConstants';
+import * as TypeConstants from '../../Constants/TypeConstants';
 
 export default class SegmentComponent extends Component {
   shouldComponentUpdate = shouldPureComponentUpdate;

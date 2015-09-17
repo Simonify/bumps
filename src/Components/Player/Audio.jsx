@@ -1,7 +1,7 @@
 import { is } from 'immutable';
 import React, { Component, PropTypes } from 'react';
-import * as TypeConstants from 'bumps/Constants/TypeConstants';
-import getYT from 'bumps/Utils/Youtube';
+import * as TypeConstants from '../../Constants/TypeConstants';
+import getYT from '../../Utils/Youtube';
 
 const YOUTUBE_REGEX = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/ ]{11})/;
 const DEBUG_YOUTUBE = false;

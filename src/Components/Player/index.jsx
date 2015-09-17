@@ -1,10 +1,10 @@
 import { is } from 'immutable';
 import React, { Component } from 'react';
 import shouldPureComponentUpdate from 'react-pure-render/function';
-import * as TypeConstants from 'bumps/Constants/TypeConstants';
-import getSegmentForPosition from 'bumps/Utils/getSegmentForPosition';
-import sortSegments from 'bumps/Utils/sortSegments';
-import SegmentComponent from 'bumps/Components/Segment';
+import * as TypeConstants from '../../Constants/TypeConstants';
+import getSegmentForPosition from '../../Utils/getSegmentForPosition';
+import sortSegments from '../../Utils/sortSegments';
+import SegmentComponent from '../../Components/Segment';
 import AudioPlayerComponent from './Audio';
 
 let LOAD_IDS = 0;
@@ -23,6 +23,7 @@ export default class PlayerComponent extends Component {
     preload: React.PropTypes.bool.isRequired,
     playing: React.PropTypes.bool.isRequired,
     defaultPosition: React.PropTypes.number.isRequired,
+    className: React.PropTypes.string,
     volume: React.PropTypes.number,
     onFinished: React.PropTypes.func,
     onChangePosition: React.PropTypes.func
@@ -75,7 +76,7 @@ export default class PlayerComponent extends Component {
         if (!state) {
           state = {};
         }
-        
+
         state.position = props.defaultPosition;
       }
 
@@ -107,6 +108,10 @@ export default class PlayerComponent extends Component {
     } else {
       className += ' is-loading';
       segment = (<div className="loader" />);
+    }
+
+    if (this.props.className) {
+      className += ` ${this.props.className}`;
     }
 
     return (

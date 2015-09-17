@@ -1,8 +1,8 @@
 import React, { Component, PropTypes } from 'react';
 import { DragSource, DropTarget } from 'react-dnd';
 import shouldPureComponentUpdate from 'react-pure-render/function';
-import * as ItemTypeConstants from 'bumps/Constants/ItemTypeConstants';
-import round from 'bumps/Utils/round';
+import * as ItemTypeConstants from '../../Constants/ItemTypeConstants';
+import round from '../../Utils/round';
 
 const segmentSource = {
   canDrag(props) {

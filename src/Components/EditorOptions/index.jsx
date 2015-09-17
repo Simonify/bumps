@@ -1,7 +1,7 @@
 import { Map, List } from 'immutable';
 import React, { Component } from 'react';
 import shouldPureComponentUpdate from 'react-pure-render/function';
-import * as EditorConstants from 'bumps/Constants/EditorConstants';
+import * as EditorConstants from '../../Constants/EditorConstants';
 
 export default class EditorOptionsComponent extends Component {
   shouldComponentUpdate = shouldPureComponentUpdate;

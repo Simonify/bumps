@@ -1,11 +1,11 @@
-import React, { Component, PropTypes } from 'react';
 import { Map, List, is } from 'immutable';
+import React, { Component, PropTypes } from 'react';
 import { DropTarget, DragDropContext } from 'react-dnd';
 import HTML5Backend from 'react-dnd/modules/backends/HTML5';
 import shouldPureComponentUpdate from 'react-pure-render/function';
-import * as TypeConstants from 'bumps/Constants/EditorConstants';
-import * as ItemTypeConstants from 'bumps/Constants/ItemTypeConstants';
-import round from 'bumps/Utils/round';
+import * as TypeConstants from '../../Constants/EditorConstants';
+import * as ItemTypeConstants from '../../Constants/ItemTypeConstants';
+import round from '../../Utils/round';
 import TimelineSegmentComponent from './Segment';
 
 const timelineTarget = {

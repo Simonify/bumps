@@ -28,5 +28,10 @@
     "react-pure-render": "^1.0.2",
     "webpack": "^1.12.0",
     "webpack-dev-server": "^1.10.1"
+  },
+  "browserify": {
+    "transform": [
+      "babelify"
+    ]
   }
 }

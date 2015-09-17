@@ -1,5 +1,5 @@
 import { List, Map } from 'immutable';
-import { TEXT, NUMBER } from 'bumps/Constants/EditorConstants';
+import { TEXT, NUMBER } from '../../Constants/EditorConstants';
 
 export default new List([
   new Map({
