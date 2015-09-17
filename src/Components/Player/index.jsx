@@ -59,6 +59,7 @@ export default class PlayerComponent extends Component {
       return;
     } else {
       const segments = props.bump.get('segments');
+      let state;
 
       if (this.props.bump.get('segments') !== segments) {
         const sortedSegments = sortSegments(segments, props.bump.get('order'));
@@ -67,7 +68,19 @@ export default class PlayerComponent extends Component {
           position: this.state.position
         });
 
-        this.setState({ segment, sortedSegments });
+        state = { segment, sortedSegments };
+      }
+
+      if (this.props.playing !== props.playing && props.playing) {
+        if (!state) {
+          state = {};
+        }
+        
+        state.position = props.defaultPosition;
+      }
+
+      if (state) {
+        this.setState(state);
       }
     }
   }

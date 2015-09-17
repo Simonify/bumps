@@ -105,7 +105,7 @@ export default class AudioPlayerComponent extends Component {
 
     if (this.props.playing !== props.playing) {
       if (props.playing) {
-        this._play();
+        this._play(props);
       } else {
         this.pause();
       }
@@ -121,19 +121,19 @@ export default class AudioPlayerComponent extends Component {
     return <span className="audio-player-component" />;
   }
 
-  _play() {
+  _play(props = this.props) {
     if (this._loaded) {
-      if (!this.props.audio || !this.state.videoId) {
-        this.props.onPlay();
+      if (!props.audio || !this.state.videoId) {
+        props.onPlay();
         return;
       }
 
-      const start = this.props.audio.get('start') || 0;
-      const duration = this.props.audio.get('duration');
+      const start = props.audio.get('start') || 0;
+      const duration = props.audio.get('duration');
 
       if (typeof duration === 'number') {
-        if (this.props.defaultPosition > duration) {
-          this.props.onPlay();
+        if (props.defaultPosition > duration) {
+          props.onPlay();
           return;
         }
       }
@@ -144,7 +144,7 @@ export default class AudioPlayerComponent extends Component {
 
       this.playing = true;
 
-      const position = (this.props.audio.get('start') || 0) + this.props.defaultPosition;
+      const position = (props.audio.get('start') || 0) + props.defaultPosition;
       this._seekYouTube(position);
       this._playYouTube();
     }
