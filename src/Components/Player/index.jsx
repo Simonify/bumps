@@ -87,6 +87,7 @@ export default class PlayerComponent extends Component {
   }
 
   componentWillUnmount() {
+    this._unmounted = true;
     this._audioLoaded = null;
   }
 
@@ -271,6 +272,10 @@ export default class PlayerComponent extends Component {
   }
 
   _onAnimationFrame() {
+    if (this._unmounted) {
+      return;
+    }
+    
     if (!this._seeking && this.state.ready && this.props.playing) {
       const duration = this.props.bump.get('duration');
       const now = Date.now();
