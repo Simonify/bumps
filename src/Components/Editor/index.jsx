@@ -1,6 +1,6 @@
 import { List, Map, is } from 'immutable';
 import React, { Component } from 'react';
-import { shouldComponentUpdate } from 'react-immutable-render-mixin';
+import shouldPureComponentUpdate from 'react-pure-render/function';
 import * as TypeConstants from 'bumps/Constants/TypeConstants';
 import * as EditorConstants from 'bumps/Constants/EditorConstants';
 import round from 'bumps/Utils/round';
@@ -26,6 +26,8 @@ const emptyBump = () => {
 };
 
 export default class EditorComponent extends Component {
+  shouldComponentUpdate = shouldPureComponentUpdate;
+
   static propTypes = {
     bump: React.PropTypes.object,
     onChange: React.PropTypes.func
@@ -90,8 +92,6 @@ export default class EditorComponent extends Component {
       }
     }
   }
-
-  shouldComponentUpdate
 
   render() {
     let inner;
@@ -225,6 +225,18 @@ export default class EditorComponent extends Component {
           type: EditorConstants.BOOLEAN,
           property: 'cover'
         }));
+
+        options = options.push(new Map({
+          label: 'Scale',
+          min: 0,
+          max: 250,
+          defaultValue: 100,
+          type: EditorConstants.RANGE,
+          property: 'scale',
+          disabled(map) {
+            return (map.get('cover') === true);
+          }
+        }));
         break;
     }
 
@@ -278,13 +290,13 @@ export default class EditorComponent extends Component {
           </span>
         </div>
         {control}
-        <a href="#" className="control-option" onClick={this._onClickAddSegment.bind(this, TypeConstants.TEXT)}>
+        <a href="#" className="control-option is-text" onClick={this._onClickAddSegment.bind(this, TypeConstants.TEXT)}>
           Add text
         </a>
-        <a href="#" className="control-option" onClick={this._onClickAddSegment.bind(this, TypeConstants.IMAGE)}>
+        <a href="#" className="control-option is-image" onClick={this._onClickAddSegment.bind(this, TypeConstants.IMAGE)}>
           Add image
         </a>
-        <a href="#" className="control-option" onClick={this._onClickAddSegment.bind(this, TypeConstants.LOGO)}>
+        <a href="#" className="control-option is-logo" onClick={this._onClickAddSegment.bind(this, TypeConstants.LOGO)}>
           Add logo
         </a>
         <a href="#" className="control-option" onClick={this._onClickExport}>
@@ -429,12 +441,14 @@ export default class EditorComponent extends Component {
 
   _onChangeTimelinePosition(position) {
     this.setState({ position }, () => {
-      this._refs.player._seek();
+      this._refs.player._seek(position);
     });
   }
 
   _onClickAddSegment(type, event) {
     event.preventDefault();
+    event.stopPropagation();
+
     const id = `seg${Date.now()}`;
     let bump = this.props.bump;
     let order = bump.get('order');
@@ -449,6 +463,7 @@ export default class EditorComponent extends Component {
     bump = bump.set('duration', this._getDuration(bump));
 
     this._onChangeBump(bump);
+    window.focus();
   }
 
   _onClickExport(event) {

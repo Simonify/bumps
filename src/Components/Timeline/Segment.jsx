@@ -1,6 +1,6 @@
 import React, { Component, PropTypes } from 'react';
 import { DragSource, DropTarget } from 'react-dnd';
-import { shouldComponentUpdate } from 'react-immutable-render-mixin';
+import shouldPureComponentUpdate from 'react-pure-render/function';
 import * as ItemTypeConstants from 'bumps/Constants/ItemTypeConstants';
 import round from 'bumps/Utils/round';
 
@@ -53,6 +53,8 @@ const segmentTarget = {
   isDragging: monitor.isDragging()
 }))
 export default class TimelineSegmentComponent extends Component {
+  shouldComponentUpdate = shouldPureComponentUpdate;
+
   static propTypes = {
     getWidth: PropTypes.func.isRequired,
     segment: PropTypes.object.isRequired,

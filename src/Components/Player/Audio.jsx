@@ -155,9 +155,11 @@ export default class AudioPlayerComponent extends Component {
       this._seekYouTube(
         (this.props.audio.get('start') || 0) + position
       );
+
+      return;
     }
 
-    return Promise.resolve();
+    this.props.onPlay();
   }
 
   pause() {

@@ -2,7 +2,7 @@ import React, { Component, PropTypes } from 'react';
 import { Map, List, is } from 'immutable';
 import { DropTarget, DragDropContext } from 'react-dnd';
 import HTML5Backend from 'react-dnd/modules/backends/HTML5';
-import { shouldComponentUpdate } from 'react-immutable-render-mixin';
+import shouldPureComponentUpdate from 'react-pure-render/function';
 import * as TypeConstants from 'bumps/Constants/EditorConstants';
 import * as ItemTypeConstants from 'bumps/Constants/ItemTypeConstants';
 import round from 'bumps/Utils/round';
@@ -18,6 +18,8 @@ const timelineTarget = {
   connectDropTarget: connect.dropTarget()
 }))
 export default class TimelineComponent extends Component {
+  shouldComponentUpdate = shouldPureComponentUpdate;
+
   static propTypes = {
     bump: PropTypes.object.isRequired,
     position: PropTypes.number.isRequired,
@@ -205,6 +207,9 @@ export default class TimelineComponent extends Component {
   }
 
   _startTracker(event) {
+    event.preventDefault();
+    event.stopPropagation();
+
     this.setState({ tracking: true });
     this._tooFar = null;
     this._trackingMouse = true;

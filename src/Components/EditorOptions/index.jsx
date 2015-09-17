@@ -1,9 +1,11 @@
 import { Map, List } from 'immutable';
 import React, { Component } from 'react';
-import { shouldComponentUpdate } from 'react-immutable-render-mixin';
+import shouldPureComponentUpdate from 'react-pure-render/function';
 import * as EditorConstants from 'bumps/Constants/EditorConstants';
 
 export default class EditorOptionsComponent extends Component {
+  shouldComponentUpdate = shouldPureComponentUpdate;
+
   static defaultProps = {
     disabled: false
   };
@@ -22,8 +24,6 @@ export default class EditorOptionsComponent extends Component {
     this.renderOption = ::this.renderOption;
   }
 
-  shouldComponentUpdate
-
   render() {
     const options = this.props.options.map(this.renderOption);
 
@@ -36,14 +36,26 @@ export default class EditorOptionsComponent extends Component {
   }
 
   renderOption(option, index) {
-    const disabled = this.props.disabled || option.get('disabled');
-    let path = [option.get('property')];
+    let disabled = this.props.disabled;
+    let path = [];
 
     if (this.props.keyPath) {
-      path = [].concat(this.props.keyPath).concat(path);
+      path = path.concat(this.props.keyPath);
     }
 
-    let value = this.props.map.getIn(path);
+    if (!disabled) {
+      const disabledProp = option.get('disabled');
+
+      if (typeof disabledProp === 'function') {
+        if (disabledProp(this.props.map.getIn(path))) {
+          disabled = true;
+        }
+      } else if (disabledProp === true) {
+        disabled = true;
+      }
+    }
+
+    let value = this.props.map.getIn(path.concat([option.get('property')]));
 
     if (typeof value === 'undefined') {
       value = option.get('defaultValue');
@@ -57,6 +69,7 @@ export default class EditorOptionsComponent extends Component {
       case EditorConstants.NUMBER:
         control = (
           <input
+            id={index + '-input'}
             type="number"
             className="value-option number-option"
             disabled={disabled}
@@ -70,6 +83,7 @@ export default class EditorOptionsComponent extends Component {
       case EditorConstants.RANGE:
         control = [
           <input
+            id={index + '-input'}
             type="range"
             className="value-option range-option"
             disabled={disabled}
@@ -86,6 +100,7 @@ export default class EditorOptionsComponent extends Component {
       case EditorConstants.TEXT:
         control = (
           <input
+            id={index + '-input'}
             type="text"
             className="value-option text-option"
             disabled={disabled}
@@ -97,6 +112,7 @@ export default class EditorOptionsComponent extends Component {
       case EditorConstants.BOOLEAN:
         control = (
           <input
+            id={index + '-input'}
             type="checkbox"
             className="value-option boolean-option"
             disabled={disabled}
@@ -109,12 +125,12 @@ export default class EditorOptionsComponent extends Component {
 
     return (
       <div key={index} className={`option${disabled ? ' is-disabled' : ''}`}>
-        <label className="wrapper">
-          <span className="label">
+        <div className="wrapper">
+          <label htmlFor={index + '-input'} className="label">
             {option.get('label')}
-          </span>
+          </label>
           <span className="value" children={control} />
-        </label>
+        </div>
       </div>
     );
   }

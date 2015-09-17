@@ -1,6 +1,6 @@
 import { is } from 'immutable';
 import React, { Component } from 'react';
-import { shouldComponentUpdate } from 'react-immutable-render-mixin';
+import shouldPureComponentUpdate from 'react-pure-render/function';
 import * as TypeConstants from 'bumps/Constants/TypeConstants';
 import getSegmentForPosition from 'bumps/Utils/getSegmentForPosition';
 import sortSegments from 'bumps/Utils/sortSegments';
@@ -10,6 +10,8 @@ import AudioPlayerComponent from './Audio';
 let LOAD_IDS = 0;
 
 export default class PlayerComponent extends Component {
+  shouldComponentUpdate = shouldPureComponentUpdate;
+
   static defaultProps = {
     playing: false,
     preload: false,
@@ -70,8 +72,6 @@ export default class PlayerComponent extends Component {
     }
   }
 
-  shouldComponentUpdate
-
   componentWillUnmount() {
     releaseAudioNode();
     this._audioLoaded = null;
@@ -117,7 +117,7 @@ export default class PlayerComponent extends Component {
   }
 
   renderSegment(segment) {
-    return <SegmentComponent segment={segment} />;
+    return <SegmentComponent key={segment.get('id')} segment={segment} />;
   }
 
   _initializeBump({ preload, bump }) {
@@ -233,7 +233,7 @@ export default class PlayerComponent extends Component {
     }
   }
 
-  _seek() {
+  _seek(position) {
     if (this.state.ready) {
       const position = this.props.defaultPosition;
       const segments = this.state.sortedSegments;

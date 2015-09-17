@@ -110,6 +110,7 @@ html, body, #root {
         }
 
         .option {
+          transition: opacity 250ms ease;
           display: block;
           width: 100%;
           padding: 10px;
@@ -196,7 +197,7 @@ html, body, #root {
 
           &.is-disabled {
             .value {
-              opacity: 0.5;
+              opacity: 0.35;
             }
           }
         }
@@ -323,7 +324,7 @@ html, body, #root {
       .video-segments {
         pointer-events: none;
       }
-      
+
       .audio-segment {
         margin: 25px 0 0 0;
         pointer-events: none;
@@ -389,6 +390,10 @@ html, body, #root {
 
         &.is-text {
           background-image: linear-gradient(-180deg, #225137 0%, #318859 100%);
+        }
+
+        &.is-image {
+          background-image: linear-gradient(-180deg, #106B6B 0%, #314788 100%);
         }
 
         &.is-logo {
