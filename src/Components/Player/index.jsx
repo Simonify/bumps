@@ -1,5 +1,5 @@
 import { is } from 'immutable';
-import React, { Component } from 'react';
+import React, { Component, PropTypes } from 'react';
 import shouldPureComponentUpdate from 'react-pure-render/function';
 import * as TypeConstants from '../../Constants/TypeConstants';
 import getSegmentForPosition from '../../Utils/getSegmentForPosition';
@@ -19,14 +19,17 @@ export default class PlayerComponent extends Component {
   };
 
   static propTypes = {
-    bump: React.PropTypes.object.isRequired,
-    preload: React.PropTypes.bool.isRequired,
-    playing: React.PropTypes.bool.isRequired,
-    defaultPosition: React.PropTypes.number.isRequired,
-    className: React.PropTypes.string,
-    volume: React.PropTypes.number,
-    onFinished: React.PropTypes.func,
-    onChangePosition: React.PropTypes.func
+    bump: PropTypes.object.isRequired,
+    preload: PropTypes.bool.isRequired,
+    playing: PropTypes.bool.isRequired,
+    defaultPosition: PropTypes.oneOfType([
+      PropTypes.number,
+      PropTypes.func
+    ]).isRequired,
+    className: PropTypes.string,
+    volume: PropTypes.number,
+    onFinished: PropTypes.func,
+    onChangePosition: PropTypes.func
   };
 
   constructor(props, context) {
@@ -41,7 +44,7 @@ export default class PlayerComponent extends Component {
 
     this.state = {
       ready: false,
-      position: props.defaultPosition,
+      position: this._getDefaultPosition(props),
       segment: null,
       sortedSegments: null
     };
@@ -77,7 +80,7 @@ export default class PlayerComponent extends Component {
           state = {};
         }
 
-        state.position = props.defaultPosition;
+        state.position = this._getDefaultPosition(props);
       }
 
       if (state) {
@@ -140,7 +143,7 @@ export default class PlayerComponent extends Component {
 
   seek(position) {
     if (this.state.ready) {
-      const position = this.props.defaultPosition;
+      const position = this._getDefaultPosition();
       const segments = this.state.sortedSegments;
       const segment = getSegmentForPosition({ segments, position });
 
@@ -149,6 +152,14 @@ export default class PlayerComponent extends Component {
 
       return this._audioRef.seek(position);
     }
+  }
+
+  _getDefaultPosition(props = this.props) {
+    if (typeof props.defaultPosition === 'function') {
+      return props.defaultPosition();
+    }
+
+    return props.defaultPosition;
   }
 
   _initializeBump({ preload, bump }) {
@@ -275,7 +286,7 @@ export default class PlayerComponent extends Component {
     if (this._unmounted) {
       return;
     }
-    
+
     if (!this._seeking && this.state.ready && this.props.playing) {
       const duration = this.props.bump.get('duration');
       const now = Date.now();

@@ -450,7 +450,7 @@ export default class EditorComponent extends Component {
 
   _onChangeTimelinePosition(position) {
     this.setState({ position }, () => {
-      this._refs.player._seek(position);
+      this._refs.player.seek(position);
     });
   }
 
