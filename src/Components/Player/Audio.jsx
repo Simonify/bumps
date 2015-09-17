@@ -260,10 +260,12 @@ export default class AudioPlayerComponent extends Component {
   }
 
   _destroy() {
+
     if (this._loaded) {
       this._loaded = false;
 
       if (this._audioPlayer) {
+        releaseAudioNode();
         this._audioPlayer.destroy();
         this._audioPlayer = null;
       }

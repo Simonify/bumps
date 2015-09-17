@@ -87,7 +87,6 @@ export default class PlayerComponent extends Component {
   }
 
   componentWillUnmount() {
-    releaseAudioNode();
     this._audioLoaded = null;
   }
 
