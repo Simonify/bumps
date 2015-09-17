@@ -81,6 +81,10 @@ export default class PlayerComponent extends Component {
     let className = 'player-component';
     let segment;
 
+    if (this.props.playing) {
+      className += ' is-playing';
+    }
+
     if (this.state.ready) {
       className += ' is-ready';
 
@@ -175,7 +179,7 @@ export default class PlayerComponent extends Component {
     this._audioRef = ref;
 
     if (!ref) {
-      console.log('#audioReady', false);
+      this.setState({ ready: false });
       this._audioReady = false;
     }
   }
@@ -191,9 +195,7 @@ export default class PlayerComponent extends Component {
   }
 
   _onAudioReady(ref) {
-    console.log('#_onAudioReady');
     if (ref === this._audioRef) {
-      console.log('#audioReady', true);
       this._audioReady = true;
 
       if (this._assetsLoaded) {
@@ -216,12 +218,15 @@ export default class PlayerComponent extends Component {
   }
 
   _onAudioPlaying(position) {
+    if (this._seeking) {
+      this._seeking = false;
+    }
+
     if (this.state.ready) {
       if (typeof position === 'number') {
         this.setState({ position });
       }
 
-      this._start = Date.now();
       this._ts = Date.now();
 
       window.requestAnimationFrame(this._onAnimationFrame);
@@ -234,8 +239,10 @@ export default class PlayerComponent extends Component {
       const segments = this.state.sortedSegments;
       const segment = getSegmentForPosition({ segments, position });
 
+      this._seeking = true;
       this.setState({ position, segment });
-      return this._audioRef.seek();
+
+      return this._audioRef.seek(position);
     }
   }
 
@@ -247,11 +254,10 @@ export default class PlayerComponent extends Component {
   }
 
   _onAnimationFrame() {
-    if (this.state.ready && this.props.playing) {
+    if (!this._seeking && this.state.ready && this.props.playing) {
       const duration = this.props.bump.get('duration');
       const now = Date.now();
       const diff = (now - this._ts) / 1000;
-
       this._ts = now;
 
       const position = Math.min(this.state.position + diff, duration);
@@ -277,11 +283,15 @@ export default class PlayerComponent extends Component {
         this.setState(state);
         this.props.onChangePosition && this.props.onChangePosition(position);
         window.requestAnimationFrame(this._onAnimationFrame);
+
+        return;
       } else {
         this.setState({ position, segment: null });
         this.props.onChangePosition && this.props.onChangePosition(position);
         this.props.onFinished && this.props.onFinished();
       }
     }
+
+    this._ts = null;
   }
 }

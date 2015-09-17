@@ -122,42 +122,38 @@ export default class AudioPlayerComponent extends Component {
   }
 
   _play() {
-    if (!this.props.audio) {
-      return Promise.resolve();
-    }
-
-    const start = this.props.audio.get('start') || 0;
-    const duration = this.props.audio.get('duration');
-
-    if (typeof duration === 'number') {
-      if (this.props.defaultPosition > duration) {
-        return Promise.resolve();
+    if (this._loaded) {
+      if (!this.props.audio || !this.state.videoId) {
+        this.props.onPlay();
+        return;
       }
-    }
 
-    if (this.playing) {
-      return;
-    }
+      const start = this.props.audio.get('start') || 0;
+      const duration = this.props.audio.get('duration');
 
-    this.playing = true;
-
-    if (this.state.videoId) {
-      if (this._loaded) {
-        if (this._hasPausedOnce) {
-          this._playYouTube();
+      if (typeof duration === 'number') {
+        if (this.props.defaultPosition > duration) {
+          this.props.onPlay();
+          return;
         }
-
-        this._seekYouTube(
-          (this.props.audio.get('start') || 0) + this.props.defaultPosition
-        );
       }
+
+      if (this.playing) {
+        return;
+      }
+
+      this.playing = true;
+
+      const position = (this.props.audio.get('start') || 0) + this.props.defaultPosition;
+      this._seekYouTube(position);
+      this._playYouTube();
     }
   }
 
-  seek() {
+  seek(position = this.props.defaultPosition) {
     if (this.state.videoId && this._loaded && this.playing) {
       this._seekYouTube(
-        (this.props.audio.get('start') || 0) + this.props.defaultPosition
+        (this.props.audio.get('start') || 0) + position
       );
     }
 
@@ -175,18 +171,6 @@ export default class AudioPlayerComponent extends Component {
         }
       }
     }
-  }
-
-  _getStateFromProps({ audio }) {
-    if (audio) {
-      const videoId = this._getVideoId(audio);
-
-      if (videoId) {
-        return { videoId, audio };
-      }
-    }
-
-    return { videoId: null, audio: null };
   }
 
   load({ videoId, audio } = this.state) {
@@ -233,22 +217,6 @@ export default class AudioPlayerComponent extends Component {
     } else if (event.data === 0) {
       this._onFinished();
     }
-  }
-
-  _getVideoId(audio) {
-    if (audio) {
-      const url = audio.get('url');
-
-      if (url) {
-        const match = url.match(YOUTUBE_REGEX);
-
-        if (match) {
-          return match[1];
-        }
-      }
-    }
-
-    return false;
   }
 
   _onReady() {
@@ -336,5 +304,33 @@ export default class AudioPlayerComponent extends Component {
     } else {
       console.error('#_seekYouTube', 'Tried to seek YT when no player exists.');
     }
+  }
+
+  _getVideoId(audio) {
+    if (audio) {
+      const url = audio.get('url');
+
+      if (url) {
+        const match = url.match(YOUTUBE_REGEX);
+
+        if (match) {
+          return match[1];
+        }
+      }
+    }
+
+    return false;
+  }
+
+  _getStateFromProps({ audio }) {
+    if (audio) {
+      const videoId = this._getVideoId(audio);
+
+      if (videoId) {
+        return { videoId, audio };
+      }
+    }
+
+    return { videoId: null, audio: null };
   }
 }
