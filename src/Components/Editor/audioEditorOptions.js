@@ -34,6 +34,7 @@ export default new List([
     min: 0,
     max: 100,
     defaultValue: 100,
+    unit: '%',
     label: 'Volume',
     property: 'volume'
   })

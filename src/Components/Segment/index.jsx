@@ -34,9 +34,15 @@ export default class SegmentComponent extends Component {
       default:
         return null;
       case TypeConstants.TEXT:
+        const style = {};
+
+        if (segment.has('letter_spacing')) {
+          style.letterSpacing = segment.get('letter_spacing');
+        }
+
         return (
           <div className="segment-type segment-text">
-            <span className="text">{segment.get('text')}</span>
+            <span className="text" style={style}>{segment.get('text')}</span>
           </div>
         );
       case TypeConstants.LOGO:

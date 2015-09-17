@@ -93,7 +93,7 @@ export default class EditorOptionsComponent extends Component {
             onChange={this._onChangeOption.bind(this, option)}
           />,
           <span className="value-hint">
-            {value}%
+            {('' + value + option.get('unit'))}
           </span>
         ];
         break;

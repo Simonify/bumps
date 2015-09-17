@@ -9,8 +9,9 @@ import getSegmentForPosition from 'bumps/Utils/getSegmentForPosition';
 import TimelineComponent from 'bumps/Components/Timeline';
 import EditorOptionsComponent from 'bumps/Components/EditorOptions';
 import PlayerComponent from 'bumps/Components/Player';
-import audioEditorOptions from './AudioEditorOptions';
-import bumpEditorOptions from './BumpEditorOptions';
+import segmentEditorOptions from './segmentEditorOptions';
+import audioEditorOptions from './audioEditorOptions';
+import bumpEditorOptions from './bumpEditorOptions';
 
 let bumps = 0;
 
@@ -146,9 +147,19 @@ export default class EditorComponent extends Component {
     const { segmentId } = this.state;
 
     if (segmentId) {
+      const segment = this.props.bump.getIn(['segments', segmentId]);
+      const onChange = (typeof this.props.onChange === 'function') ? this._onChangeSegment : null;
+      const disabled = (this.state.state !== EditorConstants.EDITING || onChange === null);
+
       return (
         <div className="editor">
-          {this.renderSegmentEditorOptions(segmentId)}
+          <EditorOptionsComponent
+            title="Segment settings"
+            map={segment}
+            options={segmentEditorOptions}
+            onChange={onChange}
+          />
+        {this.renderTypeOptions({ segment, onChange, disabled })}
           <div className="btn delete" onClick={this._onRemoveSegment.bind(this, segmentId)}>
             Delete Segment
           </div>
@@ -175,38 +186,35 @@ export default class EditorComponent extends Component {
     }
   }
 
-  renderSegmentEditorOptions(segmentId) {
-    const segment = this.props.bump.getIn(['segments', segmentId]);
-
-    let options = new List([
-      new Map({
-        label: 'Label',
-        type: EditorConstants.TEXT,
-        property: 'label'
-      }),
-
-      new Map({
-        label: 'Duration',
-        type: EditorConstants.NUMBER,
-        property: 'duration',
-        min: 0.1,
-        validate(number) {
-          return round(number, 3);
-        }
-      })
-    ]);
+  renderTypeOptions({ segment, onChange, disabled }) {
+    let options = new List();
+    let title;
 
     switch (segment.get('type')) {
       default:
         break;
       case TypeConstants.TEXT:
+        title = 'Text settings';
+
         options = options.push(new Map({
           label: 'Text',
           type: EditorConstants.TEXT,
           property: 'text'
         }));
+
+        options = options.push(new Map({
+          label: 'Letter spacing',
+          type: EditorConstants.RANGE,
+          defaultValue: 0,
+          min: -5,
+          max: 15,
+          unit: 'px',
+          property: 'letter_spacing'
+        }));
         break;
       case TypeConstants.LOGO:
+        title = 'Logo settings';
+
         options = options.push(new Map({
           label: 'Small logo',
           type: EditorConstants.BOOLEAN,
@@ -214,6 +222,8 @@ export default class EditorComponent extends Component {
         }));
         break;
       case TypeConstants.IMAGE:
+        title = 'Logo settings';
+
         options = options.push(new Map({
           label: 'URL',
           type: EditorConstants.TEXT,
@@ -232,6 +242,7 @@ export default class EditorComponent extends Component {
           max: 250,
           defaultValue: 100,
           type: EditorConstants.RANGE,
+          unit: '%',
           property: 'scale',
           disabled(map) {
             return (map.get('cover') === true);
@@ -240,14 +251,12 @@ export default class EditorComponent extends Component {
         break;
     }
 
-    const onChange = (typeof this.props.onChange === 'function') ? this._onChangeSegment : null;
-
     return (
       <EditorOptionsComponent
-        title="Segment options"
+        title={title}
         map={segment}
         options={options}
-        disabled={this.state.state !== EditorConstants.EDITING || onChange === null}
+        disabled={disabled}
         onChange={onChange}
       />
     );
