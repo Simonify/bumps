@@ -39,6 +39,7 @@ function releaseAudioNode() {
 
 export default class AudioPlayerComponent extends Component {
   static defaultProps = {
+    persistYoutubePlayer: false,
     volume: 100
   };
 
@@ -50,6 +51,7 @@ export default class AudioPlayerComponent extends Component {
     onPlay: PropTypes.func.isRequired,
     onVideoChanged: PropTypes.func.isRequired,
     volume: React.PropTypes.number.isRequired,
+    persistYoutubePlayer: React.PropTypes.bool.isRequired,
     audio: PropTypes.object,
     onError: PropTypes.func
   };
@@ -189,6 +191,11 @@ export default class AudioPlayerComponent extends Component {
     switch (audio.get('type')) {
       case TypeConstants.YOUTUBE:
         getYT().then((YT) => {
+          if (this.props.persistYoutubePlayer === true && this._audioPlayer) {
+            this._audioPlayer.loadVideoById(videoId);
+            return;
+          }
+
           this._audioPlayer = new YT.Player(getAudioNode(), {
             videoId,
             height: '100%',
@@ -264,7 +271,10 @@ export default class AudioPlayerComponent extends Component {
       this._loaded = false;
 
       if (this._audioPlayer) {
-        this._audioPlayer.destroy();
+        if (this.props.persistYoutubePlayer !== true) {
+          this._audioPlayer.destroy();
+        }
+
         this._audioPlayer = null;
       }
     }

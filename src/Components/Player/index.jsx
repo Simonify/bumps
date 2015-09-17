@@ -15,13 +15,15 @@ export default class PlayerComponent extends Component {
   static defaultProps = {
     playing: false,
     preload: false,
-    defaultPosition: 0
+    defaultPosition: 0,
+    persistYoutubePlayer: false
   };
 
   static propTypes = {
     bump: PropTypes.object.isRequired,
     preload: PropTypes.bool.isRequired,
     playing: PropTypes.bool.isRequired,
+    persistYoutubePlayer: PropTypes.bool.isRequired,
     defaultPosition: PropTypes.oneOfType([
       PropTypes.number,
       PropTypes.func
@@ -30,7 +32,7 @@ export default class PlayerComponent extends Component {
     volume: PropTypes.number,
     onReady: PropTypes.func,
     onFinished: PropTypes.func,
-    onChangePosition: PropTypes.func
+    onChangePosition: PropTypes.func,
   };
 
   constructor(props, context) {
@@ -125,6 +127,7 @@ export default class PlayerComponent extends Component {
           key={this.props.bump.get('id') + 'audio'}
           ref={this._setAudioRef}
           volume={this.props.volume}
+          persistYoutubePlayer={this.props.persistYoutubePlayer}
           playing={this.state.ready && this.props.playing}
           audio={this.props.bump.get('audio')}
           onReady={this._onAudioReady}
