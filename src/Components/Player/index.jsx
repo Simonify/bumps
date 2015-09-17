@@ -28,6 +28,7 @@ export default class PlayerComponent extends Component {
     ]).isRequired,
     className: PropTypes.string,
     volume: PropTypes.number,
+    onReady: PropTypes.func,
     onFinished: PropTypes.func,
     onChangePosition: PropTypes.func
   };
@@ -257,6 +258,8 @@ export default class PlayerComponent extends Component {
     if (!this.props.playing) {
       this.seek();
     }
+
+    this.props.onReady && this.props.onReady();
   }
 
   _onAudioPlaying(position) {
