@@ -506,8 +506,7 @@ export default class EditorComponent extends Component {
   _onClickShare(event) {
     event.preventDefault();
     const bump = window.encodeURIComponent(window.JSON.stringify(this.props.bump.toJS()));
-    window.open(`http:
-      simonify.github.io/bumps/examples/player/#${bump}`)
+    window.open(`../player/#${bump}`)
   }
 
   _onClickReset(event) {
