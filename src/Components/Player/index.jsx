@@ -104,12 +104,20 @@ export default class PlayerComponent extends Component {
             this._audioPlayer && this._audioPlayer.pause();
           }
         }
-      } else if (!audioChanged && this.props.playing) {
-        const oldStart = this.props.bump.getIn(['audio', 'start']);
-        const newStart = props.bump.getIn(['audio', 'start']);
+      }
 
-        if (oldStart !== newStart) {
-          this._audioPlayer.setSeek(this._getAudioSeek(props));
+      if (!audioChanged && this._audioPlayer) {
+        if (this.props.playing !== props.playing && this.props.playing) {
+          const oldStart = this.props.bump.getIn(['audio', 'start']);
+          const newStart = props.bump.getIn(['audio', 'start']);
+
+          if (oldStart !== newStart) {
+            this._audioPlayer.setSeek(this._getAudioSeek(props));
+          }
+        }
+
+        if (this.props.volume !== props.volume) {
+          this._audioPlayer.setVolume(this._getAudioVolume(props));
         }
       }
 
@@ -126,7 +134,7 @@ export default class PlayerComponent extends Component {
   }
 
   render() {
-    let className = 'player-component';
+    let className = 'bump-player-component';
     let segment;
 
     if (this.props.playing) {
@@ -268,8 +276,12 @@ export default class PlayerComponent extends Component {
 
     const start = this.props.bump.getIn(['audio', 'start']) || 0;
     const position = seek - start;
+
+    console.log(seek,start,position);
+
     const segments = this.state.sortedSegments;
     const segment = getSegmentForPosition({ segments, position });
+
     this.setState({ position, segment });
     this.props.onChangePosition && this.props.onChangePosition(position);
 

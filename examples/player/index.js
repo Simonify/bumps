@@ -5,6 +5,7 @@ import './scss/index.scss';
 
 window.youtubeAudioFactory = new YouTubeAudioFactory();
 window.rebuildBump = rebuildBump;
+window.playing = true;
 window.bump = null;
 
 window.render = function render(props) {
@@ -16,7 +17,12 @@ window.render = function render(props) {
 
 window.setBump = (bump) => {
   window.bump = bump;
-  render({ bump, youtubeAudioFactory, playing: true });
+  window.rerender();
+};
+
+window.rerender = () => {
+  const { bump, youtubeAudioFactory, playing } = window;
+  render({ bump, youtubeAudioFactory, playing });
 };
 
 window.setBump(rebuildBump(getBump()));
