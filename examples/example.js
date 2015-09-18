@@ -1,6 +1,7 @@
 export default {
     "id": "demo",
     "name": "Example bump",
+    "creator": "TTN",
     "order": ["segment-1", "segment-2", "image", "segment-3", "segment-4", "segment-5"],
     "segments": {
         "segment-1": {
