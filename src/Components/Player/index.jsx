@@ -72,7 +72,7 @@ export default class PlayerComponent extends Component {
       if (this.props.bump.get('segments') !== segments) {
         state.sortedSegments = sortSegments(segments, props.bump.get('order'));
         state.segment = getSegmentForPosition({
-          segments: sortedSegments,
+          segments: state.sortedSegments,
           position: this.state.position
         });
       }
