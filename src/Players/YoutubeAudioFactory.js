@@ -71,30 +71,17 @@ export default function YoutubeAudioFactory() {
     return PLAYER_PROMISE;
   }
 
-  return function getYouTubePlayer(props) {
+  const getYouTubePlayer = (props) => {
     if (DESTROYED) {
       throw new Error('YouTubeAudioFactory was already destroyed');
     }
 
-    this.destroy = () => {
-      DESTROYED = true;
-      PLAYER_PROMISE = null;
+    let cancelled = false;
 
-      if (PLAYER) {
-        PLAYER.destroy();
-        PLAYER = null;
-      }
-
-      if (DOM_NODE) {
-        releaseDOMNode(DOM_NODE);
-        DOM_NODE = null;
-      }
-    };
-
-    return new Promise((resolve, reject) => {
+    const promise = new Promise((resolve, reject) => {
       getAPI().then((YT) => {
         getPlayer(YT).then((player) => {
-          if (!DESTROYED) {
+          if (!DESTROYED && !cancelled) {
             resolve(new AudioPlayer(props, {
               YT, player,
               createStateChangeHandler, releaseStateChangeHandler
@@ -103,5 +90,28 @@ export default function YoutubeAudioFactory() {
         }, reject);
       }, reject);
     });
-  }
+
+    promise.cancel = () => {
+      cancelled = true;
+    };
+
+    return promise;
+  };
+
+  getYouTubePlayer.destroy = () => {
+    DESTROYED = true;
+    PLAYER_PROMISE = null;
+
+    if (PLAYER) {
+      PLAYER.destroy();
+      PLAYER = null;
+    }
+
+    if (DOM_NODE) {
+      releaseDOMNode(DOM_NODE);
+      DOM_NODE = null;
+    }
+  };
+
+  return getYouTubePlayer;
 }
