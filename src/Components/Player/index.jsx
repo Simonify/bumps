@@ -3,8 +3,9 @@ import React, { Component, PropTypes } from 'react';
 import shouldPureComponentUpdate from 'react-pure-render/function';
 import * as TypeConstants from '../../Constants/TypeConstants';
 import getSegmentForPosition from '../../Utils/getSegmentForPosition';
-import sortSegments from '../../Utils/sortSegments';
 import getVideoIdFromAudio from '../../Utils/getVideoIdFromAudio';
+import sortSegments from '../../Utils/sortSegments';
+import YouTubeAudioFactory from '../../Players/YouTubeAudioFactory';
 import SegmentComponent from '../../Components/Segment';
 
 let LOAD_IDS = 0;
