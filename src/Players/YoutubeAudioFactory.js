@@ -94,10 +94,12 @@ export default function YoutubeAudioFactory() {
     return new Promise((resolve, reject) => {
       getAPI().then((YT) => {
         getPlayer(YT).then((player) => {
-          resolve(new AudioPlayer(props, {
-            YT, player,
-            createStateChangeHandler, releaseStateChangeHandler
-          }));
+          if (!DESTROYED) {
+            resolve(new AudioPlayer(props, {
+              YT, player,
+              createStateChangeHandler, releaseStateChangeHandler
+            }));
+          }
         }, reject);
       }, reject);
     });
