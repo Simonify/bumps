@@ -200,6 +200,8 @@ export default class PlayerComponent extends Component {
       this._ts = Date.now();
       window.requestAnimationFrame(this._onAnimationFrame);
     }
+
+    this.props.onReady && this.props.onReady(this);
   }
 
   _getDefaultPosition(props = this.props) {
