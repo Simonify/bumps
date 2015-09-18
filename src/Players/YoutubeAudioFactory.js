@@ -16,6 +16,7 @@ const playerVars = {
 };
 
 export default function YoutubeAudioFactory() {
+  const STATE_CHANGE_HANDLERS = [];
   let DESTROYED = false;
   let PLAYER;
   let PLAYER_PROMISE;
@@ -29,6 +30,24 @@ export default function YoutubeAudioFactory() {
     return DOM_NODE;
   }
 
+  function onStateChange(event) {
+    for (let i = 0; i < STATE_CHANGE_HANDLERS.length; i++) {
+      STATE_CHANGE_HANDLERS[i](event);
+    }
+  }
+
+  function createStateChangeHandler(fn) {
+    STATE_CHANGE_HANDLERS.push(fn);
+  }
+
+  function releaseStateChangeHandler(fn) {
+    const index = STATE_CHANGE_HANDLERS.indexOf(fn);
+
+    if (index > -1) {
+      STATE_CHANGE_HANDLERS.splice(index, 1);
+    }
+  }
+
   function getPlayer(YT) {
     if (PLAYER) {
       return Promise.resolve(PLAYER);
@@ -39,6 +58,7 @@ export default function YoutubeAudioFactory() {
         const _player = new YT.Player(_getDOMNode(), {
           height, width, playerVars,
           events: {
+            onStateChange,
             onReady() {
               PLAYER = _player;
               resolve(PLAYER);
@@ -74,7 +94,10 @@ export default function YoutubeAudioFactory() {
     return new Promise((resolve, reject) => {
       getAPI().then((YT) => {
         getPlayer(YT).then((player) => {
-          resolve(new AudioPlayer({ ...props, YT, player }));
+          resolve(new AudioPlayer(props, {
+            YT, player,
+            createStateChangeHandler, releaseStateChangeHandler
+          }));
         }, reject);
       }, reject);
     });

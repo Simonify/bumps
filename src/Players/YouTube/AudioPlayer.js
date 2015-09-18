@@ -1,18 +1,22 @@
 import * as PlayerConstants from '../../Constants/PlayerConstants';
 
+let PLAYER_ID = 0;
+
 export default class YouTubeAudioPlayer {
-  constructor(props) {
+  constructor(props, factory) {
+    this.id = ++PLAYER_ID;
     this._onStateChange = ::this._onStateChange;
-    this._YT = props.YT;
-    this._player = props.player;
-    this._videoId = props.videoId;
+    this._YT = factory.YT;
+    this._player = factory.player;
     this._state = PlayerConstants.IDLE;
-    this._onSeekUpdate = props.onSeekUpdate;
+    this._videoId = props.videoId;
     this._position = props.seek || props.position || 0;
+    this._onSeekUpdate = props.onSeekUpdate;
     this._volume = null;
     this._waitingForStatus = {};
-    this._bindToPlayer();
     this.setVolume(props.volume);
+    this._factory = factory;
+    this._factory.createStateChangeHandler(this._onStateChange);
   }
 
   initialize(playing) {
@@ -31,14 +35,6 @@ export default class YouTubeAudioPlayer {
         resolve();
       }, reject);
     });
-  }
-
-  _bindToPlayer() {
-    this._player.addEventListener('onStateChange', this._onStateChange, false);
-  }
-
-  _unbindFromPlayer() {
-    this._player.removeEventListener('onStateChange', this._onStateChange, false);
   }
 
   _load(id) {
@@ -88,7 +84,7 @@ export default class YouTubeAudioPlayer {
         this.setSeek(seek);
         return;
       }
-      
+
       this.seek();
     } else {
       console.error('Tried to play when not paused.');
@@ -115,12 +111,13 @@ export default class YouTubeAudioPlayer {
   destroy() {
     this._player.stopVideo();
     this._state = PlayerConstants.IDLE;
-    this._unbindFromPlayer();
     this._YT = null;
     this._player = null;
     this._videoId = null;
     this._position = null;
     this._waitingForStatus = null;
+    this._factory.releaseStateChangeHandler(this._onStateChange);
+    this._factory = null;
   }
 
   _waitForStatus(status, callback) {
@@ -146,21 +143,5 @@ export default class YouTubeAudioPlayer {
       this._state = PlayerConstants.PLAYING;
       this._onSeekUpdate && this._onSeekUpdate(this._player.getCurrentTime());
     }
-  }
-
-  _destroy() {
-    this._yt = null;
-
-    if (this._player) {
-      this._player.destroy();
-      this._player = null;
-    }
-
-    if (this._playerPromise) {
-      this._playerPromise.cancel();
-      this._playerPromise = null;
-    }
-
-    this._destroyDOMNode();
   }
 }

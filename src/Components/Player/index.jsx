@@ -17,8 +17,7 @@ export default class PlayerComponent extends Component {
     playing: false,
     preload: false,
     volume: 100,
-    defaultPosition: 0,
-    persistYoutubePlayer: false
+    defaultPosition: 0
   };
 
   static propTypes = {
@@ -213,6 +212,8 @@ export default class PlayerComponent extends Component {
   }
 
   _loadAudio(props, loadId) {
+    this._destroyAudioPlayer();
+
     const bump = props.bump;
     const audio = bump.get('audio');
     const videoId = getVideoIdFromAudio(audio);
@@ -237,8 +238,6 @@ export default class PlayerComponent extends Component {
           }
         });
       });
-    } else if (this._audioPlayer) {
-      this._destroyAudioPlayer();
     }
 
     return Promise.resolve();
@@ -282,14 +281,14 @@ export default class PlayerComponent extends Component {
 
   _getYouTubePlayer(props) {
     if (this.props.youtubeAudioFactory) {
-      return this.props.youtubeAudioFactory(props);
+      return new this.props.youtubeAudioFactory(props);
     }
 
     if (!this._youtubeAudioFactory) {
       this._youtubeAudioFactory = new YouTubeAudioFactory();
     }
 
-    return this._youtubeAudioFactory(props);
+    return new this._youtubeAudioFactory(props);
   }
 
   _preloadSegmentAssets(segments) {
