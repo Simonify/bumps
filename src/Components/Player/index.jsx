@@ -77,53 +77,11 @@ export default class PlayerComponent extends Component {
         });
       }
 
-      let audioChanged = !is(this.props.bump.get('audio'), props.bump.get('audio'));
-
-      if (audioChanged) {
-        const oldUrl = this.props.bump.getIn(['audio', 'url']);
-        const newUrl = props.bump.getIn(['audio', 'url']);
-        audioChanged = (newUrl !== oldUrl);
-
-        if (audioChanged) {
-          state.ready = false;
-
-          this._audioPlayer && this._audioPlayer.pause();
-          this._loadAudio(props, ++this._loadId).then(this._onBumpReady);
-        }
+      if (this.props.playing !== props.playing && props.playing) {
+        state.position = this._getDefaultPosition(props);
       }
 
-      if (this.props.playing !== props.playing) {
-        if (props.playing) {
-          state.position = this._getDefaultPosition(props);
-        }
-
-        if (!audioChanged && this._audioPlayer) {
-          if (props.playing) {
-            this._audioPlayer && this._audioPlayer.play(this._getAudioSeek(props));
-          } else {
-            this._audioPlayer && this._audioPlayer.pause();
-          }
-        }
-      }
-
-      if (!audioChanged && this._audioPlayer) {
-        if (this.props.playing !== props.playing && this.props.playing) {
-          const oldStart = this.props.bump.getIn(['audio', 'start']);
-          const newStart = props.bump.getIn(['audio', 'start']);
-
-          if (oldStart !== newStart) {
-            this._audioPlayer.setSeek(this._getAudioSeek(props));
-          }
-        }
-
-        if (this.props.volume !== props.volume) {
-          this._audioPlayer.setVolume(this._getAudioVolume(props));
-        }
-      }
-
-      if (state) {
-        this.setState(state);
-      }
+      this.setState(this._updateAudioState(props, state));
     }
   }
 
@@ -169,12 +127,12 @@ export default class PlayerComponent extends Component {
       const segments = this.state.sortedSegments;
       const segment = getSegmentForPosition({ segments, position });
 
-      this._seeking = true;
-      this.setState({ position, segment });
-
       if (this._audioPlayer && this.props.playing) {
+        this._seeking = true;
         this._audioPlayer.setSeek(this._getAudioSeek(this.props));
       }
+
+      this.setState({ position, segment });
     }
   }
 
@@ -201,11 +159,11 @@ export default class PlayerComponent extends Component {
     const position = this._getDefaultPosition();
     const segments = this.state.sortedSegments;
     const segment = getSegmentForPosition({ segments, position });
+
     this.setState({ ready: true, segment });
 
     if (this.props.playing) {
-      this._ts = Date.now();
-      window.requestAnimationFrame(this._onAnimationFrame);
+      this._startTracking();
     }
 
     this.props.onReady && this.props.onReady(this);
@@ -225,6 +183,8 @@ export default class PlayerComponent extends Component {
     const bump = props.bump;
     const audio = bump.get('audio');
     const videoId = getVideoIdFromAudio(audio);
+
+    this._videoId = videoId;
 
     if (videoId) {
       return new Promise((resolve, reject) => {
@@ -284,8 +244,7 @@ export default class PlayerComponent extends Component {
     this.props.onChangePosition && this.props.onChangePosition(position);
 
     if (this.props.playing && !this._ts) {
-      this._ts = Date.now();
-      window.requestAnimationFrame(this._onAnimationFrame);
+      this._startTracking();
     }
   }
 
@@ -342,6 +301,61 @@ export default class PlayerComponent extends Component {
     });
 
     return Promise.all(promises);
+  }
+
+  _updateAudioState(props, state) {
+    const audio = props.bump.get('audio');
+    let audioChanged = !is(this.props.bump.get('audio'), props.bump.get('audio'));
+
+    if (audioChanged) {
+      const oldUrl = this.props.bump.getIn(['audio', 'url']);
+      const newUrl = props.bump.getIn(['audio', 'url']);
+      audioChanged = (newUrl !== oldUrl);
+
+      if (audioChanged) {
+        this._audioPlayer && this._audioPlayer.pause();
+        this._audioPlaying = false;
+        this._loadAudio(props, ++this._loadId).then(this._onBumpReady);
+
+        return { ...state, ready: false };
+      }
+    }
+
+    if (this._audioPlayer) {
+      const oldStart = this.props.bump.getIn(['audio', 'start']);
+      const newStart = props.bump.getIn(['audio', 'start']);
+
+      if (this.props.playing !== props.playing) {
+        if (props.playing) {
+          this._audioPlaying = true;
+          this._audioPlayer.play(this._getAudioSeek(props));
+        } else {
+          this._audioPlaying = false;
+          this._audioPlayer.pause();
+        }
+      } else if (props.playing && oldStart !== newStart) {
+        this._audioPlayer.setSeek(this._getAudioSeek(props));
+      }
+
+      if (this.props.volume !== props.volume) {
+        this._audioPlayer.setVolume(this._getAudioVolume(props));
+      }
+    } else if (!this._videoId) {
+      debugger;
+
+      if (this.props.playing !== props.playing && props.playing) {
+        this._startTracking();
+      }
+    }
+
+    return state;
+  }
+
+  _startTracking() {
+    if (!this._ts) {
+      this._ts = Date.now();
+      window.requestAnimationFrame(this._onAnimationFrame);
+    }
   }
 
   _onAnimationFrame() {
