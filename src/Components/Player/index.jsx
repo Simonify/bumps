@@ -277,8 +277,6 @@ export default class PlayerComponent extends Component {
     const start = this.props.bump.getIn(['audio', 'start']) || 0;
     const position = seek - start;
 
-    console.log(seek,start,position);
-
     const segments = this.state.sortedSegments;
     const segment = getSegmentForPosition({ segments, position });
 

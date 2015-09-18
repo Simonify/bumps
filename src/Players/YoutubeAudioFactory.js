@@ -2,7 +2,7 @@ import getAPI from './YouTube/getAPI';
 import getDOMNode, { releaseDOMNode } from './YouTube/getDOMNode';
 import AudioPlayer from './YouTube/AudioPlayer';
 
-const DEBUG_YOUTUBE = window.DEBUG_YOUTUBE || true;
+const DEBUG_YOUTUBE = window.DEBUG_YOUTUBE || false;
 const width = '100%';
 const height = '100%';
 const playerVars = {

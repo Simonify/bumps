@@ -50,6 +50,14 @@
     margin: auto;
     max-width: 500px;
 
+    /*
+     * For some reason image scaling breaks in Firefox when youre a direct
+     * descendant of a flexbox element
+     */
+    .logo-wrapper {
+      width: 100%;
+    }
+
     .image {
       max-width: 100%;
     }
