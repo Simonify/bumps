@@ -1,8 +1,11 @@
 import React from 'react';
-import { PlayerComponent, rebuildBump } from 'bumps';
+import { PlayerComponent, YouTubeAudioFactory, rebuildBump } from 'bumps';
 import getBump from '../getBump';
 import './scss/index.scss';
 
+const youtubeAudioFactory = window.a = new YouTubeAudioFactory();
+
+// *
 window.rebuildBump = rebuildBump;
 window.render = function render(props) {
   React.render(
@@ -12,4 +15,6 @@ window.render = function render(props) {
 };
 
 const bump = rebuildBump(getBump());
-render({ bump, playing: true, persistYoutubePlayer: true });
+
+render({ bump, youtubeAudioFactory, playing: true });
+// */

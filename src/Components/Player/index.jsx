@@ -4,8 +4,8 @@ import shouldPureComponentUpdate from 'react-pure-render/function';
 import * as TypeConstants from '../../Constants/TypeConstants';
 import getSegmentForPosition from '../../Utils/getSegmentForPosition';
 import sortSegments from '../../Utils/sortSegments';
+import getVideoIdFromAudio from '../../Utils/getVideoIdFromAudio';
 import SegmentComponent from '../../Components/Segment';
-import AudioPlayerComponent from './Audio';
 
 let LOAD_IDS = 0;
 
@@ -15,6 +15,7 @@ export default class PlayerComponent extends Component {
   static defaultProps = {
     playing: false,
     preload: false,
+    volume: 100,
     defaultPosition: 0,
     persistYoutubePlayer: false
   };
@@ -23,27 +24,27 @@ export default class PlayerComponent extends Component {
     bump: PropTypes.object.isRequired,
     preload: PropTypes.bool.isRequired,
     playing: PropTypes.bool.isRequired,
-    persistYoutubePlayer: PropTypes.bool.isRequired,
     defaultPosition: PropTypes.oneOfType([
       PropTypes.number,
       PropTypes.func
     ]).isRequired,
     className: PropTypes.string,
-    volume: PropTypes.number,
     onReady: PropTypes.func,
     onFinished: PropTypes.func,
     onChangePosition: PropTypes.func,
+    volume: PropTypes.number,
+    youtubeAudioFactory: PropTypes.func
   };
 
   constructor(props, context) {
     super(props, context);
     this._loadId = 0;
-    this._onChangePosition = ::this._onChangePosition;
+    this._audioPlayer = null;
     this._onAnimationFrame = ::this._onAnimationFrame;
-    this._setAudioRef = ::this._setAudioRef;
-    this._onAudioReady = ::this._onAudioReady;
-    this._onAudioPlaying = ::this._onAudioPlaying;
-    this._onVideoChanged = ::this._onVideoChanged;
+    this._onBumpReady = ::this._onBumpReady;
+
+    this._getAudioSeek = ::this._getAudioSeek;
+    this._onAudioSeekUpdate = ::this._onAudioSeekUpdate;
 
     this.state = {
       ready: false,
@@ -66,24 +67,50 @@ export default class PlayerComponent extends Component {
       return;
     } else {
       const segments = props.bump.get('segments');
-      let state;
+      const state = {};
 
       if (this.props.bump.get('segments') !== segments) {
-        const sortedSegments = sortSegments(segments, props.bump.get('order'));
-        const segment = getSegmentForPosition({
+        state.sortedSegments = sortSegments(segments, props.bump.get('order'));
+        state.segment = getSegmentForPosition({
           segments: sortedSegments,
           position: this.state.position
         });
-
-        state = { segment, sortedSegments };
       }
 
-      if (this.props.playing !== props.playing && props.playing) {
-        if (!state) {
-          state = {};
+      let audioChanged = !is(this.props.bump.get('audio'), props.bump.get('audio'));
+
+      if (audioChanged) {
+        const oldUrl = this.props.bump.getIn(['audio', 'url']);
+        const newUrl = props.bump.getIn(['audio', 'url']);
+        audioChanged = (newUrl !== oldUrl);
+
+        if (audioChanged) {
+          state.ready = false;
+
+          this._audioPlayer && this._audioPlayer.pause();
+          this._loadAudio(props, ++this._loadId).then(this._onBumpReady);
+        }
+      }
+
+      if (this.props.playing !== props.playing) {
+        if (props.playing) {
+          state.position = this._getDefaultPosition(props);
         }
 
-        state.position = this._getDefaultPosition(props);
+        if (!audioChanged && this._audioPlayer) {
+          if (props.playing) {
+            this._audioPlayer && this._audioPlayer.play(this._getAudioSeek(props));
+          } else {
+            this._audioPlayer && this._audioPlayer.pause();
+          }
+        }
+      } else if (!audioChanged && this.props.playing) {
+        const oldStart = this.props.bump.getIn(['audio', 'start']);
+        const newStart = props.bump.getIn(['audio', 'start']);
+
+        if (oldStart !== newStart) {
+          this._audioPlayer.setSeek(this._getAudioSeek(props));
+        }
       }
 
       if (state) {
@@ -94,7 +121,8 @@ export default class PlayerComponent extends Component {
 
   componentWillUnmount() {
     this._unmounted = true;
-    this._audioLoaded = null;
+    this._destroyAudioPlayer();
+    this._destroyAudioFactory();
   }
 
   render() {
@@ -120,25 +148,7 @@ export default class PlayerComponent extends Component {
       className += ` ${this.props.className}`;
     }
 
-    return (
-      <div className={className}>
-        {segment}
-        <AudioPlayerComponent
-          key="audio"
-          ref={this._setAudioRef}
-          volume={this.props.volume}
-          persistYoutubePlayer={this.props.persistYoutubePlayer}
-          playing={this.state.ready && this.props.playing}
-          audio={this.props.bump.get('audio')}
-          onReady={this._onAudioReady}
-          onPlay={this._onAudioPlaying}
-          onError={this._onAudioError}
-          onVideoChanged={this._onVideoChanged}
-          defaultPosition={this.state.position}
-          onChangePosition={this._onChangePosition}
-        />
-      </div>
-    );
+    return (<div className={className}>{segment}</div>);
   }
 
   renderSegment(segment) {
@@ -154,7 +164,40 @@ export default class PlayerComponent extends Component {
       this._seeking = true;
       this.setState({ position, segment });
 
-      return this._audioRef.seek(position);
+      if (this._audioPlayer && this.props.playing) {
+        this._audioPlayer.setSeek(this._getAudioSeek(this.props));
+      }
+    }
+  }
+
+  _initializeBump(props, oldProps) {
+    const { preload, bump } = props;
+    const loadId = this._loadId = ++LOAD_IDS;
+    const sortedSegments = sortSegments(bump.get('segments'), bump.get('order'));
+
+    this.setState({ ready: false, segment: null, sortedSegments });
+
+    const preloadAssets = this._preloadSegmentAssets(sortedSegments);
+    const promises = [
+      this._loadAudio(props, loadId)
+    ];
+
+    if (this.props.preload) {
+      promises.push(preloadAssets);
+    }
+
+    Promise.all(promises).then(this._onBumpReady.bind(this, loadId));
+  }
+
+  _onBumpReady() {
+    const position = this._getDefaultPosition();
+    const segments = this.state.sortedSegments;
+    const segment = getSegmentForPosition({ segments, position });
+    this.setState({ ready: true, segment });
+
+    if (this.props.playing) {
+      this._ts = Date.now();
+      window.requestAnimationFrame(this._onAnimationFrame);
     }
   }
 
@@ -166,44 +209,91 @@ export default class PlayerComponent extends Component {
     return props.defaultPosition;
   }
 
-  _initializeBump({ preload, bump }, oldProps) {
-    /** Reset state **/
-    const loadId = this._loadId = ++LOAD_IDS;
-    const sortedSegments = sortSegments(bump.get('segments'), bump.get('order'));
+  _loadAudio(props, loadId) {
+    const bump = props.bump;
+    const audio = bump.get('audio');
+    const videoId = getVideoIdFromAudio(audio);
 
-    this._preLoaded = false;
+    if (videoId) {
+      return new Promise((resolve, reject) => {
+        const seek = this._getAudioSeek;
+        const volume = this._getAudioVolume(props);
+        const onSeekUpdate = this._onAudioSeekUpdate;
+        const getPlayer = this._getYouTubePlayer({
+          videoId, seek, volume, onSeekUpdate
+        });
 
-    /*
-     * I don't like this.
-     * ===
-     */
-      if (oldProps && oldProps.oldBump) {
-        const oldAudio = oldBump.get('audio');
-        const newAudio = oldProps.bump.get('audio');
-
-        if (!is(oldAudio, newAudio)) {
-          const oldUrl = oldAudio && oldAudio.get('url');
-          const newUrl = newAudio && newAudio.get('url');
-
-          if (oldUrl !== newUrl) {
-            this._audioReady = false;
+        getPlayer.then((youtubeAudioPlayer) => {
+          if (loadId === this._loadId) {
+            this._audioPlayer = youtubeAudioPlayer;
+            this._audioPlayer.initialize(this.props.playing).then(resolve, reject);
           }
-        }
-      }
+        }, () => {
+          if (loadId === this._loadId) {
+            reject();
+          }
+        });
+      });
+    } else if (this._audioPlayer) {
+      this._destroyAudioPlayer();
+    }
 
-      if (this._audioReady) {
-        this._seekOnReady = true;
-      }
-    /*
-     * ====
-     */
+    return Promise.resolve();
+  }
 
-    this.setState({ ready: false, segment: null, sortedSegments });
+  _getAudioSeek(props = this.props) {
+    const position = this._getDefaultPosition(props);
+    const start = props.bump.getIn(['audio', 'start']) || 0;
+    return start + position;
+  }
 
-    const promises = [];
+  _getAudioVolume(props) {
+    let sourceVolume = props.bump.getIn(['audio', 'volume']);
+
+    if (sourceVolume === 0) {
+      return 0;
+    }
+
+    if (typeof sourceVolume !== 'number') {
+      sourceVolume = 100;
+    }
+
+    return (props.volume / 100) * sourceVolume;
+  }
+
+  _onAudioSeekUpdate(seek) {
+    this._seeking = false;
+
+    const start = this.props.bump.getIn(['audio', 'start']) || 0;
+    const position = seek - start;
+    const segments = this.state.sortedSegments;
+    const segment = getSegmentForPosition({ segments, position });
+    this.setState({ position, segment });
+    this.props.onChangePosition && this.props.onChangePosition(position);
+
+    if (this.props.playing && !this._ts) {
+      this._ts = Date.now();
+      window.requestAnimationFrame(this._onAnimationFrame);
+    }
+  }
+
+  _getYouTubePlayer(props) {
+    if (this.props.youtubeAudioFactory) {
+      return this.props.youtubeAudioFactory(props);
+    }
+
+    if (!this._youtubeAudioFactory) {
+      this._youtubeAudioFactory = new YouTubeAudioFactory();
+    }
+
+    return this._youtubeAudioFactory(props);
+  }
+
+  _preloadSegmentAssets(segments) {
     const loaded = {};
+    const promises = [];
 
-    bump.get('segments').forEach((segment) => {
+    segments.forEach((segment) => {
       switch (segment.get('type')) {
         default:
           break;
@@ -239,79 +329,7 @@ export default class PlayerComponent extends Component {
       }
     });
 
-    if (this.props.preload) {
-      Promise.all(promises).then(this._onAssetsLoaded.bind(this, loadId));
-    } else {
-      this._onAssetsLoaded(loadId);
-    }
-  }
-
-  _setAudioRef(ref) {
-    this._audioRef = ref;
-
-    if (!ref) {
-      this.setState({ ready: false });
-      this._audioReady = false;
-    }
-  }
-
-  _onAssetsLoaded(loadId) {
-    if (loadId === this._loadId) {
-      this._assetsLoaded = true;
-
-      if (this._audioReady) {
-        this._isReady();
-      }
-    }
-  }
-
-  _onAudioReady(ref) {
-    if (ref === this._audioRef) {
-      this._audioReady = true;
-
-      if (this._assetsLoaded) {
-        this._isReady();
-      }
-    }
-  }
-
-  _onVideoChanged() {
-    this.setState({ ready: false });
-    this._audioReady = false;
-  }
-
-  _isReady() {
-    this.setState({ ready: true });
-
-    if (this._seekOnReady || !this.props.playing) {
-      this._seekOnReady = false;
-      this.seek();
-    }
-
-    this.props.onReady && this.props.onReady();
-  }
-
-  _onAudioPlaying(position) {
-    if (this._seeking) {
-      this._seeking = false;
-    }
-
-    if (this.state.ready) {
-      if (typeof position === 'number') {
-        this.setState({ position });
-      }
-
-      this._ts = Date.now();
-
-      window.requestAnimationFrame(this._onAnimationFrame);
-    }
-  }
-
-  _onChangePosition(position) {
-    const segments = this.state.sortedSegments;
-    const segment = getSegmentForPosition({ segments, position });
-    this.setState({ position, segment });
-    this.props.onChangePosition && this.props.onChangePosition(position);
+    return Promise.all(promises);
   }
 
   _onAnimationFrame() {
@@ -330,8 +348,8 @@ export default class PlayerComponent extends Component {
       if (position >= this.props.bump.getIn(['audio', 'duration'])) {
         // Pause the audio ASAP.
 
-        if (this._audioRef.playing) {
-          this._audioRef.pause();
+        if (this._audioPlayer) {
+          this._audioPlayer.pause();
         }
       }
 
@@ -358,5 +376,19 @@ export default class PlayerComponent extends Component {
     }
 
     this._ts = null;
+  }
+
+  _destroyAudioPlayer() {
+    if (this._audioPlayer) {
+      this._audioPlayer.destroy();
+      this._audioPlayer = null;
+    }
+  }
+
+  _destroyAudioFactory() {
+    if (this._youtubeAudioFactory) {
+      this._youtubeAudioFactory.destroy();
+      this._youtubeAudioFactory = null;
+    }
   }
 }

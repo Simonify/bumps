@@ -9,6 +9,7 @@ import getSegmentForPosition from '../../Utils/getSegmentForPosition';
 import TimelineComponent from '../../Components/Timeline';
 import EditorOptionsComponent from '../../Components/EditorOptions';
 import PlayerComponent from '../../Components/Player';
+import YouTubeAudioFactory from '../../Players/YouTubeAudioFactory';
 import segmentEditorOptions from './segmentEditorOptions';
 import audioEditorOptions from './audioEditorOptions';
 import bumpEditorOptions from './bumpEditorOptions';
@@ -53,6 +54,7 @@ export default class EditorComponent extends Component {
     this._onClickShare = ::this._onClickShare;
     this._onClickReset = ::this._onClickReset;
     this._onChangeTimelinePosition = ::this._onChangeTimelinePosition;
+    this._youtubeAudioFatory = new YouTubeAudioFactory();
     this.state = {
       position: 0,
       segmentId: null,
@@ -139,6 +141,7 @@ export default class EditorComponent extends Component {
         playing={this.state.state === EditorConstants.PREVIEWING}
         onFinished={this._startEditing}
         onChangePosition={this._onChangePosition}
+        youtubeAudioFactory={this._youtubeAudioFatory}
       />
     );
   }
@@ -503,7 +506,8 @@ export default class EditorComponent extends Component {
   _onClickShare(event) {
     event.preventDefault();
     const bump = window.encodeURIComponent(window.JSON.stringify(this.props.bump.toJS()));
-    window.open(`http://simonify.github.io/bumps/examples/player/#${bump}`)
+    window.open(`http:
+      simonify.github.io/bumps/examples/player/#${bump}`)
   }
 
   _onClickReset(event) {
