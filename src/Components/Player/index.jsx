@@ -274,11 +274,13 @@ export default class PlayerComponent extends Component {
     const promises = [];
 
     segments.forEach((segment) => {
+      let url;
+      
       switch (segment.get('type')) {
         default:
           break;
         case IMAGE:
-          const url = segment.get('url');
+          url = segment.get('url');
 
           if (url) {
             if (!loaded[url]) {
@@ -294,14 +296,24 @@ export default class PlayerComponent extends Component {
           }
           break;
         case LOGO:
-          if (!loaded.logo) {
-            loaded.logo = true;
+          let url;
 
+          if (segment.get('small')) {
+            if (!loaded.logo_small) {
+              loaded.logo_small = true;
+              url = 'http://i.imgur.com/zwx39CO.png';
+            }
+          } else if (!loaded.logo) {
+            loaded.logo = true;
+            url = 'http://i.imgur.com/tmemlQd.png';
+          }
+
+          if (url) {
             promises.push(new Promise((resolve, reject) => {
               const image = new Image();
               image.onload = resolve;
               image.onerror = reject;
-              image.src = 'http://i.imgur.com/tmemlQd.png';
+              image.src = url;
             }));
           }
           break;
