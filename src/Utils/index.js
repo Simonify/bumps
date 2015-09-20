@@ -1,5 +1,6 @@
 import round from './round';
 import bindAll from './bindAll';
+import emptyBump from './emptyBump';
 import generateId from './generateId';
 import rebuildBump from './rebuildBump';
 import sortSegments from './sortSegments';
@@ -10,6 +11,7 @@ import ensureDocumentFocused from './ensureDocumentFocused';
 export {
   round,
   bindAll,
+  emptyBump,
   generateId,
   rebuildBump,
   sortSegments,

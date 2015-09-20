@@ -1,8 +1,8 @@
 import { Map, List } from 'immutable';
-import { YOUTUBE } from '../../Constants/TypeConstants';
+import { YOUTUBE } from '../Constants/TypeConstants';
 import generateId from './generateId';
 
-const emptyBump = () => {
+export default function emptyBump() {
   return new Map({
     id: generateId(),
     name: 'Untitled bump',
