@@ -18,7 +18,6 @@ export default class SegmentComponent extends Component {
     this.state = { loading: true };
   }
 
-
   render() {
     const { segment } = this.props;
 

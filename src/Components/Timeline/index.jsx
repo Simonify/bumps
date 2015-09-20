@@ -59,8 +59,6 @@ export default class TimelineComponent extends Component {
     }
   }
 
-  shouldComponentUpdate
-
   componentWillUnmount() {
     window.removeEventListener('keydown', this._onKeyDown, this);
   }
@@ -347,12 +345,21 @@ export default class TimelineComponent extends Component {
             }
           }
           break;
+        case 189:
+          if (event.metaKey) {
+            this._setZoom(this.state.zoom - 0.05);
+          }
+          break;
+        case 187:
+          if (event.metaKey) {
+            this._setZoom(this.state.zoom + 0.05);
+          }
+          break;
       }
 
       event.preventDefault();
     }
   }
-
 
   _secondsToTimecode(seconds) {
     const m = '' + Math.floor((seconds * 1000 / (1000 * 60)) % 60);
@@ -426,6 +433,12 @@ export default class TimelineComponent extends Component {
 
   _findIndex(id) {
     return this.props.bump.get('order').indexOf(id);
+  }
+
+  _setZoom(zoom) {
+    this.setState({
+      zoom: round(Math.max(0.05, Math.min(zoom, 5)), 3)
+    });
   }
 
   _rebuildSize() {

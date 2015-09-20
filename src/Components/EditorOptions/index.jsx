@@ -1,7 +1,11 @@
 import { Map, List } from 'immutable';
 import React, { Component } from 'react';
 import shouldPureComponentUpdate from 'react-pure-render/function';
-import * as EditorConstants from '../../Constants/EditorConstants';
+import { NUMBER, TEXT, RANGE, BOOLEAN } from '../../Constants/EditorConstants';
+import segmentTypeEditorOptions from './segmentTypeEditorOptions';
+import segmentEditorOptions from './segmentEditorOptions';
+import audioEditorOptions from './audioEditorOptions';
+import bumpEditorOptions from './bumpEditorOptions';
 
 export default class EditorOptionsComponent extends Component {
   shouldComponentUpdate = shouldPureComponentUpdate;
@@ -64,9 +68,7 @@ export default class EditorOptionsComponent extends Component {
     let control;
 
     switch (option.get('type')) {
-      default:
-        break;
-      case EditorConstants.NUMBER:
+      case NUMBER:
         control = (
           <input
             id={index + '-input'}
@@ -80,7 +82,7 @@ export default class EditorOptionsComponent extends Component {
           />
         );
         break;
-      case EditorConstants.RANGE:
+      case RANGE:
         control = [
           <input
             id={index + '-input'}
@@ -97,7 +99,7 @@ export default class EditorOptionsComponent extends Component {
           </span>
         ];
         break;
-      case EditorConstants.TEXT:
+      case TEXT:
         control = (
           <input
             id={index + '-input'}
@@ -109,7 +111,7 @@ export default class EditorOptionsComponent extends Component {
           />
         );
         break;
-      case EditorConstants.BOOLEAN:
+      case BOOLEAN:
         control = (
           <input
             id={index + '-input'}
@@ -148,14 +150,14 @@ export default class EditorOptionsComponent extends Component {
     switch (option.get('type')) {
       default:
         break;
-      case EditorConstants.NUMBER:
-      case EditorConstants.RANGE:
+      case NUMBER:
+      case RANGE:
         value = window.parseFloat(event.currentTarget.value, 10);
         break;
-      case EditorConstants.TEXT:
+      case TEXT:
         value = event.currentTarget.value;
         break;
-      case EditorConstants.BOOLEAN:
+      case BOOLEAN:
         value = event.currentTarget.checked;
         break;
     }
@@ -172,4 +174,11 @@ export default class EditorOptionsComponent extends Component {
       this.props.onChange(mutated);
     }
   }
-}
+};
+
+export {
+  segmentTypeEditorOptions,
+  segmentEditorOptions,
+  audioEditorOptions,
+  bumpEditorOptions
+};

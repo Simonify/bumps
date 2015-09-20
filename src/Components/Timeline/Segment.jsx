@@ -93,8 +93,6 @@ export default class TimelineSegmentComponent extends Component {
     this._node = null;
   }
 
-  shouldComponentUpdate
-
   render() {
     const { getWidth, segment, isDragging, connectDragSource, connectDropTarget } = this.props;
     const duration = this._getDuration();

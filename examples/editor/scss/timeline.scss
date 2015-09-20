@@ -154,6 +154,8 @@
   @import "./timeline/segment";
 
   &.is-tracking {
+    cursor: col-resize;
+    
     .position-track {
       background-color: #EDED1D;
     }
