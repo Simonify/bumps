@@ -1,4 +1,4 @@
-import { Map, List } from 'immutable';
+import { Map, List, OrderedSet } from 'immutable';
 import React, { Component } from 'react';
 import shouldPureComponentUpdate from 'react-pure-render/function';
 import { NUMBER, TEXT, RANGE, BOOLEAN } from '../../Constants/EditorConstants';
@@ -19,7 +19,7 @@ export default class EditorOptionsComponent extends Component {
     map: React.PropTypes.object.isRequired,
     options: React.PropTypes.object.isRequired,
     disabled: React.PropTypes.bool.isRequired,
-    keyPath: React.PropTypes.array,
+    keyPath: React.PropTypes.object,
     onChange: React.PropTypes.func
   };
 
@@ -41,7 +41,7 @@ export default class EditorOptionsComponent extends Component {
 
   renderOption(option, index) {
     let disabled = this.props.disabled;
-    let path = [];
+    let path = new OrderedSet();
 
     if (this.props.keyPath) {
       path = path.concat(this.props.keyPath);
@@ -140,7 +140,7 @@ export default class EditorOptionsComponent extends Component {
   _onChangeOption(option, event) {
     const property = option.get('property');
     let mutated = this.props.map;
-    let path = [];
+    let path = new OrderedSet();
     let value;
 
     if (this.props.keyPath) {

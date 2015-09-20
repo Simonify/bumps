@@ -1,4 +1,4 @@
-import { List, Map, is } from 'immutable';
+import { List, Map, OrderedSet, is } from 'immutable';
 import React, { Component } from 'react';
 import shouldPureComponentUpdate from 'react-pure-render/function';
 import { EDITING, PREVIEWING } from '../../Constants/EditorConstants';
@@ -16,6 +16,8 @@ import {
   rebuildBump, getSegmentForPosition, round,
   bindAll, generateId, emptyBump
 } from '../../Utils';
+
+const AUDIO_KEYPATH = new OrderedSet(['audio']);
 
 export default class EditorComponent extends Component {
   shouldComponentUpdate = shouldPureComponentUpdate;
@@ -220,7 +222,7 @@ export default class EditorComponent extends Component {
         <EditorOptionsComponent
           title="Audio settings"
           map={this.props.bump}
-          keyPath={['audio']}
+          keyPath={AUDIO_KEYPATH}
           options={audioEditorOptions}
           onChange={this._setAudio}
         />

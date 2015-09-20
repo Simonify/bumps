@@ -11,8 +11,6 @@ import SegmentComponent from '../../Components/Segment';
 let LOAD_IDS = 0;
 
 export default class PlayerComponent extends Component {
-  shouldComponentUpdate = shouldPureComponentUpdate;
-
   static defaultProps = {
     playing: false,
     preload: false,
@@ -42,7 +40,6 @@ export default class PlayerComponent extends Component {
     this._audioPlayer = null;
     this._onAnimationFrame = ::this._onAnimationFrame;
     this._onBumpReady = ::this._onBumpReady;
-
     this._getAudioSeek = ::this._getAudioSeek;
     this._onAudioSeekUpdate = ::this._onAudioSeekUpdate;
 
@@ -52,6 +49,17 @@ export default class PlayerComponent extends Component {
       segment: null,
       sortedSegments: null
     };
+  }
+
+  shouldComponentUpdate(props, state) {
+    return (
+      this.props.bump !== props.bump ||
+      (this.props.defaultPosition !== props.defaultPosition && !props.playing) ||
+      this.props.playing !== props.playing ||
+      this.state.ready !== state.ready ||
+      this.state.segment !== state.segment ||
+      this.state.sortedSegments !== state.sortedSegments
+    );
   }
 
   componentDidMount() {
