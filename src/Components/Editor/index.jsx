@@ -295,23 +295,27 @@ export default class EditorComponent extends Component {
         position, segments, order, sort: true
       }, true);
 
-      const index = order.indexOf(splitSegment.get('id'));
+      if (segment) {
+        const index = order.indexOf(splitSegment.get('id'));
 
-      if (seek > 0) {
-        // cutting
-        const originalDuration = splitSegment.get('duration');
-        const prefix = splitSegment.set('duration', seek);
-        const suffixDuration = originalDuration - seek;
-        const suffixId = generateId();
+        if (seek > 0) {
+          // cutting
+          const originalDuration = splitSegment.get('duration');
+          const prefix = splitSegment.set('duration', seek);
+          const suffixDuration = originalDuration - seek;
+          const suffixId = generateId();
 
-        let suffix = splitSegment.set('duration', suffixDuration);
-        suffix = suffix.set('id', suffixId);
+          let suffix = splitSegment.set('duration', suffixDuration);
+          suffix = suffix.set('id', suffixId);
 
-        order = order.splice(index + 1, 0, id, suffixId);
-        segments = segments.set(suffixId, suffix);
-        segments = segments.set(prefix.get('id'), prefix);
+          order = order.splice(index + 1, 0, id, suffixId);
+          segments = segments.set(suffixId, suffix);
+          segments = segments.set(prefix.get('id'), prefix);
+        } else {
+          order = order.splice(index, 0, id);
+        }
       } else {
-        order = order.splice(index, 0, id);
+        order = order.push(id);
       }
     } else {
       order = order.unshift(id);
