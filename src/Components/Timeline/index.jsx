@@ -3,18 +3,13 @@ import React, { Component, PropTypes } from 'react';
 import { DropTarget, DragDropContext } from 'react-dnd';
 import HTML5Backend from 'react-dnd/modules/backends/HTML5';
 import shouldPureComponentUpdate from 'react-pure-render/function';
-import * as TypeConstants from '../../Constants/EditorConstants';
-import * as ItemTypeConstants from '../../Constants/ItemTypeConstants';
+import { TIMELINE_SEGMENT } from '../../Constants/ItemTypeConstants';
 import round from '../../Utils/round';
+import bindAll from '../../Utils/bindAll';
 import TimelineSegmentComponent from './Segment';
 
-const timelineTarget = {
-  drop() {
-  }
-};
-
 @DragDropContext(HTML5Backend)
-@DropTarget(ItemTypeConstants.TIMELINE_SEGMENT, timelineTarget, connect => ({
+@DropTarget(TIMELINE_SEGMENT, { drop() {} }, connect => ({
   connectDropTarget: connect.dropTarget()
 }))
 export default class TimelineComponent extends Component {
@@ -25,32 +20,43 @@ export default class TimelineComponent extends Component {
     position: PropTypes.number.isRequired,
     selectedSegmentId: PropTypes.string,
     toggleState: PropTypes.func,
+    addSegment: React.PropTypes.func,
     removeSegment: React.PropTypes.func,
     onSelectSegment: PropTypes.func,
     onChangeSegment: PropTypes.func,
     onChangePosition: PropTypes.func,
     onChangeBump: React.PropTypes.func,
-
     connectDropTarget: PropTypes.func.isRequired
   };
 
   constructor(props, context) {
     super(props, context);
+
+    bindAll(this, [
+      '_onClick', '_onKeyDown', '_onChangeZoom',
+      '_startTracker', '_onMoveTracker', '_stopTracker',
+      '_moveSegment', '_findIndex', '_rebuildSize',
+      '_setContentsRef', '_setVideoSegmentsRef',
+      '_getWidthForDuration', 'renderSegment'
+    ]);
+
     this._segmentRef = {};
-    this._onClick = ::this._onClick;
-    this._onKeyDown = ::this._onKeyDown;
-    this._stopTracker = ::this._stopTracker;
-    this.renderSegment = ::this.renderSegment;
-    this._startTracker = ::this._startTracker;
-    this._onMoveTracker = ::this._onMoveTracker;
-    this._getWidthForDuration = ::this._getWidthForDuration;
-    this._findIndex = ::this._findIndex;
-    this._moveSegment = ::this._moveSegment;
     this.state = { zoom: 1 };
   }
 
   componentDidMount() {
-    window.addEventListener('keydown', this._onKeyDown, this);
+    window.addEventListener('keydown', this._onKeyDown, false);
+  }
+
+  componentDidUpdate(oldProps, oldState) {
+    const position = this._getWidthForDuration(this.props.position);
+    const node = React.findDOMNode(this._contentsRef);
+
+    if (position > this._size.width + node.scrollLeft) {
+      node.scrollLeft = position;
+    } else if (position < node.scrollLeft) {
+      node.scrollLeft = position;
+    }
   }
 
   shouldComponentUpdate
@@ -64,11 +70,35 @@ export default class TimelineComponent extends Component {
     const className = `timeline-component${this.state.tracking ? ' is-tracking' : ''}`;
 
     return this.props.connectDropTarget(
-      <div className={className} onMouseDown={this._onClick}>
-        {this.renderPositionTrack()}
-        <div className="video-segments">{segments}</div>
-        <div className="audio-segment">
-          {this.renderAudioSegment()}
+      <div className={className}>
+        <div ref={this._setContentsRef} className="timeline-contents" onMouseDown={this._onClick}>
+          {this.renderPositionTrack()}
+          {this.renderTimeHints()}
+          <div className="video-segments" ref={this._setVideoSegmentsRef}>
+            {segments}
+          </div>
+          <div className="audio-segment">
+            {this.renderAudioSegment()}
+          </div>
+        </div>
+        <div className="timeline-controls">
+          <div className="position">
+            {this._secondsToTimecode(this.props.position)}
+          </div>
+          <div className="zoom">
+            <span className="string">
+              {this.state.zoom}x
+            </span>
+            <input
+              className="scale"
+              type="range"
+              min={0.05}
+              max={5}
+              step={0.05}
+              value={this.state.zoom}
+              onChange={this._onChangeZoom}
+            />
+          </div>
         </div>
       </div>
     );
@@ -80,6 +110,7 @@ export default class TimelineComponent extends Component {
 
     return (
       <div
+        key="track"
         className="position-track"
         onMouseDown={this._startTracker}
         style={style}
@@ -87,13 +118,50 @@ export default class TimelineComponent extends Component {
     );
   }
 
+  renderTimeHints() {
+    const durationSegmentDuration = this.state.zoom;
+    const durationSegmentWidth = this._getWidthForDuration(durationSegmentDuration);
+    const durationSegmentsCount = Math.ceil(this.props.bump.get('duration') / durationSegmentDuration);
+    const durationSegmentPeaksWidth = durationSegmentWidth / 10;
+    const hasText = durationSegmentWidth > 40;
+    const hints = [];
+    const bumps = [];
+
+    for (let i = 0; i < 10; i++) {
+      bumps.push((
+        <div
+          key={i}
+          className={`bump ` + ( i % 2 === 0 ? 'odd' : 'even')}
+          style={{ width: `${durationSegmentPeaksWidth}px` }}
+        />
+      ));
+    }
+
+    for (let i = 0; i < durationSegmentsCount; i++) {
+      const position = durationSegmentDuration * i;
+
+      hints.push(
+        <div key={i} className="hint" style={{ width: `${durationSegmentWidth}px` }}>
+          {hasText ? (
+            <div className="text">
+              {this._secondsToTimecode(position)}
+            </div>
+          ) : null}
+          <div className="bumps" children={bumps} />
+        </div>
+      )
+    }
+
+    return (<div className="time-hints" children={hints} />);
+  }
+
   renderSegment(id) {
     const segment = this.props.bump.getIn(['segments', id]);
 
     return (
       <TimelineSegmentComponent
-        ref={this._setSegmentRef.bind(this, id)}
         key={id}
+        ref={this._setSegmentRef.bind(this, id)}
         segment={segment}
         findIndex={this._findIndex}
         getWidth={this._getWidthForDuration}
@@ -101,6 +169,7 @@ export default class TimelineComponent extends Component {
         onClick={this.props.onSelectSegment}
         onChange={this.props.onChangeSegment}
         selected={this.props.selectedSegmentId === id}
+        zoom={this.state.zoom}
       />
     );
   }
@@ -110,20 +179,13 @@ export default class TimelineComponent extends Component {
       const audio = this.props.bump.get('audio');
 
       if (audio.get('url')) {
-        let duration = audio.get('duration');
-
-        if (typeof duration !== 'number') {
-          duration = this.props.bump.get('duration');
-        }
-
-        const width = this._getWidthForDuration(duration);
-
         return (
           <TimelineSegmentComponent
             key={audio.get('id')}
             getWidth={this._getWidthForDuration}
             segment={audio}
             onChange={this.props.onChangeAudio}
+            zoom={this.state.zoom}
           />
         );
       }
@@ -132,6 +194,177 @@ export default class TimelineComponent extends Component {
 
   _setSegmentRef(id, ref) {
     this._segmentRef[id] = ref;
+  }
+
+  _setVideoSegmentsRef(ref) {
+    this._videoSegmentsRef = ref;
+  }
+
+  _setContentsRef(ref) {
+    this._contentsRef = ref;
+
+    if (ref) {
+      this._rebuildSize();
+      window.addEventListener('resize', this._rebuildSize, false);
+    } else {
+      window.removeEventListener('resize', this._rebuildSize, false);
+    }
+  }
+
+  _onClick(event) {
+    if (!this._trackingMouse && event.target === event.currentTarget) {
+      const target = event.currentTarget;
+      const rect = target.getBoundingClientRect();
+      const first = target.querySelector('.segment');
+      const padding = first ? first.offsetLeft : 0;
+      const x = (event.clientX + target.scrollLeft - padding - rect.left) / (this.state.zoom * 100);
+      const position = Math.max(0, Math.min(x, this.props.bump.get('duration')));
+
+      this.props.onChangePosition(position);
+      this.props.onSelectSegment(null);
+      this._startTracker(event);
+    }
+  }
+
+  _startTracker(event) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    this.setState({ tracking: true });
+    this._tooFar = null;
+    this._trackingMouse = true;
+    this._mouseX = event.clientX;
+
+    document.body.addEventListener('mousemove', this._onMoveTracker, false);
+    window.addEventListener('mouseup', this._stopTracker, false);
+  }
+
+  _onMoveTracker(event) {
+    const node = React.findDOMNode(this._contentsRef);
+    const diff = event.clientX - this._mouseX;
+    const segmentsContainer = React.findDOMNode(this._videoSegmentsRef);
+    const left = (event.clientX - segmentsContainer.offsetLeft - this._size.left + node.scrollLeft);
+    const newLeft = this._snapNearestEdge(left, diff);
+    const newPosition = this._getDurationFromWidth(newLeft);
+    const movedPosition = Math.max(newPosition, 0);
+    const position = Math.min(movedPosition, this.props.bump.get('duration'));
+
+    this._mouseX = event.clientX;
+    this.props.onChangePosition(position);
+  }
+
+  _snapNearestEdge(left, direction) {
+    if (direction === 0) {
+      return left;
+    }
+
+    const order = this.props.bump.get('order').toArray();
+    const SNAP_DIFF = 20;
+
+    let paddingLeft = null;
+
+    for (let i = 0; i < order.length; i++) {
+      const node = React.findDOMNode(this._segmentRef[order[i]]);
+
+      if (node) {
+        let offsetLeft = node.offsetLeft;
+
+        if (paddingLeft === null) {
+          paddingLeft = offsetLeft;
+        }
+
+        offsetLeft -= paddingLeft;
+
+        if (direction > 0) {
+          // going right
+          if (offsetLeft > left) {
+            // node is further away than the pos
+            if (offsetLeft - left <= SNAP_DIFF) {
+              return offsetLeft;
+            }
+          }
+        } else if (direction < 0) {
+          // going left
+          if (offsetLeft < left) {
+            if (left - offsetLeft <= SNAP_DIFF) {
+              return offsetLeft - (i > 0 ? 1 : 0);
+            }
+          }
+        }
+      } else {
+        return left;
+      }
+    }
+
+    return left;
+  }
+
+  _stopTracker(event) {
+    event.preventDefault();
+    this._trackingMouse = false;
+    this._mouseX = null;
+    document.body.removeEventListener('mousemove', this._onMoveTracker, false);
+    window.removeEventListener('mouseup', this._stopTracker, false);
+    this.setState({ tracking: false });
+  }
+
+  _onChangeZoom(event) {
+    this.setState({ zoom: event.target.value });
+  }
+
+  _onKeyDown(event) {
+    if (event.target === document.body) {
+      switch (event.keyCode) {
+        default:
+          return;
+        case 32:
+          this.props.toggleState();
+          break;
+        case 8:
+          if (this.props.selectedSegmentId) {
+            this.props.removeSegment(this.props.selectedSegmentId);
+          }
+          break;
+        case 219:
+          if (event.altKey) {
+            this._trimSegment(this.props.selectedSegmentId, true);
+          }
+          break;
+        case 221:
+          if (event.altKey) {
+            this._trimSegment(this.props.selectedSegmentId);
+          }
+          break;
+        case 67:
+          if (event.metaKey) {
+            this._copiedSegment = this.props.bump.getIn(['segments', this.props.selectedSegmentId]);
+          }
+          break;
+        case 86:
+          if (event.metaKey) {
+            if (this._copiedSegment) {
+              this.props.addSegment(this._copiedSegment.set('id', null));
+            }
+          }
+          break;
+      }
+
+      event.preventDefault();
+    }
+  }
+
+
+  _secondsToTimecode(seconds) {
+    const m = '' + Math.floor((seconds * 1000 / (1000 * 60)) % 60);
+    const s = '' + Math.floor(seconds % 60);
+    const ms = ('' + Math.floor((seconds * 1000) % 1000)).slice(0,2);
+    const string = [];
+
+    string.push('00'.substring(m.length) + m);
+    string.push('00'.substring(s.length) + s);
+    string.push('00'.substring(ms.length) + ms);
+
+    return string.join(':');
   }
 
   _getWidthForDuration(duration) {
@@ -147,7 +380,7 @@ export default class TimelineComponent extends Component {
       return 0;
     }
 
-    return ((width / this.state.zoom) / 100);
+    return round((width / this.state.zoom) / 100, 3);
   }
 
   _moveSegment(id, atIndex) {
@@ -191,81 +424,16 @@ export default class TimelineComponent extends Component {
     }
   }
 
-  _onClick(event) {
-    if (!this._trackingMouse && event.target === event.currentTarget) {
-      const target = event.currentTarget;
-      const rect = target.getBoundingClientRect();
-      const first = target.querySelector('.segment');
-      const padding = first ? first.offsetLeft : 0;
-      const x = (event.clientX + target.scrollLeft - padding - rect.left) / 100;
-      const position = Math.max(0, Math.min(x, this.props.bump.get('duration')));
-
-      this.props.onChangePosition(position);
-      this.props.onSelectSegment(null);
-      this._startTracker(event);
-    }
-  }
-
-  _startTracker(event) {
-    event.preventDefault();
-    event.stopPropagation();
-
-    this.setState({ tracking: true });
-    this._tooFar = null;
-    this._trackingMouse = true;
-    this._mouseX = event.clientX;
-
-    document.body.addEventListener('mousemove', this._onMoveTracker, false);
-    window.addEventListener('mouseup', this._stopTracker, false);
-  }
-
-  _onMoveTracker(event) {
-    const diff = event.clientX - this._mouseX;
-    const movedPosition = Math.max((this.props.position + (diff / 100)), 0);
-    const position = Math.min(movedPosition, this.props.bump.get('duration'));
-    this._mouseX = event.clientX;
-    this.props.onChangePosition(position);
-  }
-
-  _stopTracker(event) {
-    event.preventDefault();
-    this._trackingMouse = false;
-    this._mouseX = null;
-    document.body.removeEventListener('mousemove', this._onMoveTracker, false);
-    window.removeEventListener('mouseup', this._stopTracker, false);
-    this.setState({ tracking: false });
-  }
-
-  _onKeyDown(event) {
-    if (event.target === document.body) {
-      switch (event.keyCode) {
-        default:
-          return;
-        case 32:
-          this.props.toggleState();
-          break;
-        case 8:
-          if (this.props.selectedSegmentId) {
-            this.props.removeSegment(this.props.selectedSegmentId);
-          }
-          break;
-        case 219:
-          if (event.altKey) {
-            this._trimSegment(this.props.selectedSegmentId, true);
-          }
-          break;
-        case 221:
-          if (event.altKey) {
-            this._trimSegment(this.props.selectedSegmentId);
-          }
-          break;
-      }
-
-      event.preventDefault();
-    }
-  }
-
   _findIndex(id) {
     return this.props.bump.get('order').indexOf(id);
+  }
+
+  _rebuildSize() {
+    const node = React.findDOMNode(this._contentsRef);
+
+    this._size = {
+      width: node.offsetWidth,
+      left: node.offsetLeft
+    };
   }
 }

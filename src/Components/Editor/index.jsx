@@ -4,6 +4,7 @@ import shouldPureComponentUpdate from 'react-pure-render/function';
 import * as TypeConstants from '../../Constants/TypeConstants';
 import * as EditorConstants from '../../Constants/EditorConstants';
 import round from '../../Utils/round';
+import generateId from '../../Utils/generateId';
 import rebuildBump from '../../Utils/rebuildBump';
 import getSegmentForPosition from '../../Utils/getSegmentForPosition';
 import TimelineComponent from '../../Components/Timeline';
@@ -43,6 +44,7 @@ export default class EditorComponent extends Component {
     this._onChangeAudio = ::this._onChangeAudio;
     this._onChangeSegment = ::this._onChangeSegment;
     this._onChangePosition = ::this._onChangePosition;
+    this._onAddSegment = ::this._onAddSegment;
     this._onRemoveSegment = ::this._onRemoveSegment;
     this._onSelectSegment = ::this._onSelectSegment;
     this._onClickReset = ::this._onClickReset;
@@ -135,6 +137,7 @@ export default class EditorComponent extends Component {
   renderPreview() {
     return (
       <PlayerComponent
+        key="player"
         ref={this._setPlayerRef}
         bump={this.props.bump}
         defaultPosition={this.state.position}
@@ -330,6 +333,7 @@ export default class EditorComponent extends Component {
   renderTimeline() {
     return (
       <TimelineComponent
+        key="timeline"
         bump={this.props.bump}
         position={this.state.position}
         selectedSegmentId={this.state.segmentId}
@@ -339,46 +343,10 @@ export default class EditorComponent extends Component {
         onChangeAudio={this._onChangeAudio}
         onChangePosition={this._onChangeTimelinePosition}
         onChangeBump={this._onChangeBump}
+        addSegment={this._onAddSegment}
         removeSegment={this._onRemoveSegment}
       />
     );
-  }
-
-  _setPosition(position) {
-    this.setState({
-      position,
-      segment: getSegmentForPosition({
-        segments: this.props.bump.get('segments'),
-        order: this.props.bump.get('order'),
-        position
-      })
-    });
-  }
-
-  _startPreviewing() {
-    if (this.state.state === EditorConstants.EDITING) {
-      let position = this.state.position;
-
-      if (position >= this.props.bump.get('duration')) {
-        position = 0;
-      }
-
-      this.setState({ state: EditorConstants.PREVIEWING, position });
-    }
-  }
-
-  _startEditing() {
-    if (this.state.state === EditorConstants.PREVIEWING) {
-      this.setState({ state: EditorConstants.EDITING });
-    }
-  }
-
-  _toggleState() {
-    if (this.state.state === EditorConstants.PREVIEWING) {
-      this._startEditing();
-    } else {
-      this._startPreviewing();
-    }
   }
 
   _setPlayerRef(ref) {
@@ -388,22 +356,11 @@ export default class EditorComponent extends Component {
   _onClickReset(event) {
     event.preventDefault();
     this.props.onChange(emptyBump());
+    this._ensureDocumentFocused();
   }
 
   _onChangeBump(bump) {
     this.props.onChange(bump);
-  }
-
-  _getSegmentsDuration(segments) {
-    return round(segments.reduce((value, segment) => {
-      return value + segment.get('duration');
-    }, 0), 1);
-  }
-
-  _getDuration(bump) {
-    const segmentsDuration = this._getSegmentsDuration(bump.get('segments'));
-    const audioDuration = bump.getIn(['audio', 'duration']) || 0;
-    return Math.max(segmentsDuration, audioDuration);
   }
 
   _onChangeSegment(updated) {
@@ -423,6 +380,56 @@ export default class EditorComponent extends Component {
     }
 
     bump = bump.set('audio', audio);
+    bump = bump.set('duration', this._getDuration(bump));
+
+    this._onChangeBump(bump);
+  }
+
+  _onAddSegment(segment) {
+    let id = segment.get('id');
+
+    if (!id) {
+      id = `seg${Date.now()}`;
+      segment = segment.set('id', id);
+    }
+
+    let bump = this.props.bump;
+    let segments = bump.get('segments');
+    let order = bump.get('order');
+
+    const position = this.state.position;
+
+    if (position > 0) {
+      const { segment: splitSegment, seek } = getSegmentForPosition({
+        position, segments, order, sort: true
+      }, true);
+
+      const index = order.indexOf(splitSegment.get('id'));
+
+      if (seek > 0) {
+        // cutting
+        const originalDuration = splitSegment.get('duration');
+        const prefix = splitSegment.set('duration', seek);
+        const suffixDuration = originalDuration - seek;
+        const suffixId = generateId();
+
+        let suffix = splitSegment.set('duration', suffixDuration);
+        suffix = suffix.set('id', suffixId);
+
+        order = order.splice(index + 1, 0, id, suffixId);
+        segments = segments.set(suffixId, suffix);
+        segments = segments.set(prefix.get('id'), prefix);
+      } else {
+        order = order.splice(index, 0, id);
+      }
+    } else {
+      order = order.unshift(id);
+    }
+
+    segments = segments.set(id, segment);
+
+    bump = bump.set('order', order);
+    bump = bump.set('segments', segments);
     bump = bump.set('duration', this._getDuration(bump));
 
     this._onChangeBump(bump);
@@ -460,22 +467,9 @@ export default class EditorComponent extends Component {
   _onClickAddSegment(type, event) {
     event.preventDefault();
     event.stopPropagation();
-
-    const id = `seg${Date.now()}`;
-    let bump = this.props.bump;
-    let order = bump.get('order');
-    let segments = bump.get('segments');
     let label = type + ' seg';
-
-    order = order.push(id);
-    segments = segments.set(id, new Map({ id, type, label, duration: 1 }));
-
-    bump = bump.set('order', order);
-    bump = bump.set('segments', segments);
-    bump = bump.set('duration', this._getDuration(bump));
-
-    this._onChangeBump(bump);
-    window.focus();
+    this._onAddSegment(new Map({ type, label, duration: 1 }));
+    document.body.focus();
   }
 
   _onClickExport(event) {
@@ -515,5 +509,66 @@ export default class EditorComponent extends Component {
     if (window.confirm('Are you sure you want to reset? This will remove any changes you have made.')) {
       this.props.onChange(emptyBump());
     }
+
+    window.focus();
+  }
+
+  _setPosition(position) {
+    this.setState({
+      position,
+      segment: getSegmentForPosition({
+        segments: this.props.bump.get('segments'),
+        order: this.props.bump.get('order'),
+        position
+      })
+    });
+  }
+
+  _startPreviewing() {
+    if (this.state.state === EditorConstants.EDITING) {
+      let position = this.state.position;
+
+      if (position >= this.props.bump.get('duration')) {
+        position = 0;
+      }
+
+      this.setState({ state: EditorConstants.PREVIEWING, position });
+    }
+
+    this._ensureDocumentFocused();
+  }
+
+  _startEditing() {
+    if (this.state.state === EditorConstants.PREVIEWING) {
+      this.setState({ state: EditorConstants.EDITING });
+    }
+
+    this._ensureDocumentFocused();
+  }
+
+  _toggleState() {
+    if (this.state.state === EditorConstants.PREVIEWING) {
+      this._startEditing();
+    } else {
+      this._startPreviewing();
+    }
+  }
+
+  _getSegmentsDuration(segments) {
+    return round(segments.reduce((value, segment) => {
+      return value + segment.get('duration');
+    }, 0), 1);
+  }
+
+  _getDuration(bump) {
+    const segmentsDuration = this._getSegmentsDuration(bump.get('segments'));
+    const audioDuration = bump.getIn(['audio', 'duration']) || 0;
+    return Math.max(segmentsDuration, audioDuration);
+  }
+
+  _ensureDocumentFocused() {
+    window.setTimeout(() => {
+      document.activeElement.blur();
+    }, 10);
   }
 }

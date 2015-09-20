@@ -1,0 +1,57 @@
+.control-bar {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  flex-grow: 0;
+  width: 100%;
+  padding: 10px;
+  height: 50px;
+
+  .state {
+    display: inline-block;
+    border: 1px solid rgba(0, 0, 0, 0.3);
+    box-shadow: 0px 1px 0px 0px rgba(255, 255, 255, 0.15);
+    border-radius: 2px;
+    font-size: 13px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+
+    .label {
+      display: inline-block;
+      padding: 5px 10px;
+      background: rgba(0,0,0,0.2);
+      font-weight: 500;
+    }
+
+    .value {
+      display: inline;
+      font-family: monospace;
+      padding: 5px 10px;
+    }
+  }
+
+  .control-option {
+    margin: 0 0 0 15px;
+    padding: 5px 10px;
+    background: rgba(0,0,0,0.1);
+    border: 1px solid rgba(0,0,0,0.2);
+    box-shadow: 0px 1px 0px 0px rgba(255, 255, 255, 0.15);
+    border-radius: 2px;
+    font-size: 13px;
+    font-weight: 500;
+    text-decoration: none;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    color: #FFFFFF;
+
+    &:hover {
+      background-color: rgba(0,0,0,0.05);
+    }
+
+    &:active {
+      background: rgba(0,0,0,0.4);
+    }
+  }
+}

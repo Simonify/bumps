@@ -1,0 +1,90 @@
+.segment {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  height: 50px;
+  border-radius: 2px;
+  border: 1px solid rgba(0,0,0,0.25);
+  box-shadow: 0px 2px 3px 0px rgba(0, 0, 0, 0.33),
+              inset 0px 0px 0px 1px rgba(255, 255, 255, 0.1);
+  font-size: 12px;
+  line-height: 12px;
+  overflow: hidden;
+  cursor: pointer;
+  pointer-events: all;
+
+  .inner {
+    padding: 0 10px;
+  }
+
+  .drag-left, .drag-right {
+    position: absolute;
+    display: block;
+    top: 0;
+    width: 10px;
+    height: 100%;
+    cursor: col-resize;
+  }
+
+  .drag-left {
+    left: 0;
+  }
+
+  .drag-right {
+    right: 0;
+  }
+
+  .type {
+    display: inline-block;
+    border-radius: 1px;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    padding: 3px;
+    font-size: 10px;
+    font-weight: 500;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.75);
+    vertical-align: middle;
+  }
+
+  .label {
+    display: inline-block;
+    margin: 0 0 0 5px;
+    font-weight: 500;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    vertical-align: middle;
+  }
+
+  &.is-text {
+    background-image: linear-gradient(-180deg, #225137 0%, #318859 100%);
+  }
+
+  &.is-image {
+    background-image: linear-gradient(-180deg, #106B6B 0%, #314788 100%);
+  }
+
+  &.is-logo {
+    background-image: linear-gradient(0deg, #252525 0%, #373737 100%);
+  }
+
+  &.is-youtube {
+    background-image: linear-gradient(-180deg, #D34611 0%, #73331A 100%);
+  }
+
+  &.is-selected {
+    box-shadow: 0px 2px 3px 0px rgba(0, 0, 0, 0.33),
+                inset 0px 0px 0px 2px rgba(255, 255, 255, 1);
+
+  }
+
+  &.is-dragging {
+    opacity: 0.5;
+  }
+
+  &:active {
+    box-shadow: 0px 2px 3px 0px rgba(0, 0, 0, 0.33),
+                inset 0px 0px 0px 2px #FFB91C;
+
+  }
+}

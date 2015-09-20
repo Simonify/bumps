@@ -1,0 +1,161 @@
+.timeline-component {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 1;
+  flex-grow: 1;
+  width: 100%;
+  overflow: hidden;
+
+  .timeline-contents {
+    position: relative;
+    display: flex;
+    flex-wrap: wrap;
+    flex-grow: 1;
+    padding: 45px 15px 15px 15px;
+    background: #272727;
+    box-shadow: inset 0px 2px 2px 2px rgba(0, 0, 0, 0.35);
+    border-radius: 3px;
+    white-space: nowrap;
+    overflow: auto;
+
+    .time-hints {
+      position: absolute;
+      top: 0;
+      left: 0;
+      padding: 0 15px;
+      height: 20px;
+      width: 100%;
+      font-size: 11px;
+      white-space: nowrap;
+      pointer-events: none;
+      z-index: 1;
+
+      .hint {
+        position: relative;
+        display: inline-block;
+        height: 100%;
+        overflow: hidden;
+        vertical-align: bottom;
+
+        .text {
+          position: relative;
+          padding: 5px 5px;
+          color: rgba(255, 255, 255, 0.5);
+          z-index: 1;
+        }
+
+        .bumps {
+          display: flex;
+          position: absolute;
+          z-index: 0;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          white-space: nowrap;
+        }
+
+        .bump {
+          display: inline-block;
+          border-left: 1px solid rgba(255, 255, 255, 0.15);
+          vertical-align: baseline;
+
+          &.odd {
+            height: 25%;
+          }
+
+          &.even {
+            height: 50%;
+          }
+
+          &:first-child {
+            height: 100%;
+          }
+        }
+      }
+    }
+
+    .video-segments {
+      display: block;
+      width: 100%;
+      pointer-events: none;
+    }
+
+    .audio-segment {
+      margin: 25px 0 0 0;
+      pointer-events: none;
+    }
+  }
+
+  .timeline-controls {
+    display: flex;
+    padding: 0 10px;
+    height: 35px;
+    text-align: right;
+    justify-content: flex-end;
+    align-items: center;
+
+    .position {
+      width: 50%;
+      text-align: left;
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.5);
+    }
+
+    .zoom {
+      width: 50%;
+      text-align: right;
+
+      .scale {
+        @include range-track();
+
+        &::-webkit-slider-thumb {
+          @include range-thumb();
+        }
+
+        &::-moz-range-track {
+          @include range-track();
+        }
+
+        &::-moz-range-thumb {
+          @include range-thumb();
+        }
+
+        &::-moz-focus-outer {
+          border: 0;
+        }
+      }
+
+      .string {
+        display: inline-block;
+        margin: 0 10px 0 0;
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.5);
+      }
+    }
+  }
+
+  .position-track {
+    transition: background-color 250ms ease;
+    position: absolute;
+    display: block;
+    top: 0;
+    width: 1px;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.5);
+    z-index: 2;
+    cursor: col-resize;
+
+    &:hover {
+      background-color: #EDED1D;
+    }
+  }
+
+  @import "./timeline/segment";
+
+  &.is-tracking {
+    .position-track {
+      background-color: #EDED1D;
+    }
+  }
+}

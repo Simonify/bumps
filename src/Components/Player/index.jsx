@@ -128,8 +128,10 @@ export default class PlayerComponent extends Component {
       const segment = getSegmentForPosition({ segments, position });
 
       if (this._audioPlayer && this.props.playing) {
-        this._seeking = true;
-        this._audioPlayer.setSeek(this._getAudioSeek(this.props));
+        if (position < this.props.bump.getIn(['audio', 'duration'])) {
+          this._seeking = true;
+          this._audioPlayer.setSeek(this._getAudioSeek(this.props));
+        }
       }
 
       this.setState({ position, segment });
@@ -325,24 +327,31 @@ export default class PlayerComponent extends Component {
       const oldStart = this.props.bump.getIn(['audio', 'start']);
       const newStart = props.bump.getIn(['audio', 'start']);
 
-      if (this.props.playing !== props.playing) {
-        if (props.playing) {
-          this._audioPlaying = true;
-          this._audioPlayer.play(this._getAudioSeek(props));
-        } else {
-          this._audioPlaying = false;
-          this._audioPlayer.pause();
+      if (this.props.playing !== props.playing || props.ready !== props.ready) {
+        if (this.state.ready) {
+          if (props.playing) {
+            if (this._getDefaultPosition(props) < this.props.bump.getIn(['audio', 'duration'])) {
+              this._audioPlaying = true;
+              this._audioPlayer.play(this._getAudioSeek(props));
+            } else {
+              this._startTracking();
+            }
+          } else {
+            this._audioPlaying = false;
+            this._audioPlayer.pause();
+          }
         }
       } else if (props.playing && oldStart !== newStart) {
         this._audioPlayer.setSeek(this._getAudioSeek(props));
       }
 
-      if (this.props.volume !== props.volume) {
+      if (
+        this.props.volume !== props.volume ||
+        this.props.bump.getIn(['audio', 'volume']) !== props.bump.get(['audio', 'volume'])
+      ) {
         this._audioPlayer.setVolume(this._getAudioVolume(props));
       }
     } else if (!this._videoId) {
-      debugger;
-
       if (this.props.playing !== props.playing && props.playing) {
         this._startTracking();
       }
