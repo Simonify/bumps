@@ -5,6 +5,7 @@ import rebuildBump from './rebuildBump';
 import sortSegments from './sortSegments';
 import getVideoIdFromAudio from './getVideoIdFromAudio';
 import getSegmentForPosition from './getSegmentForPosition';
+import ensureDocumentFocused from './ensureDocumentFocused';
 
 export {
   round,
@@ -13,5 +14,6 @@ export {
   rebuildBump,
   sortSegments,
   getVideoIdFromAudio,
-  getSegmentForPosition
+  getSegmentForPosition,
+  ensureDocumentFocused
 };

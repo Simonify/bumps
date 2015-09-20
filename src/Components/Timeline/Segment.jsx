@@ -2,7 +2,7 @@ import React, { Component, PropTypes } from 'react';
 import { DragSource, DropTarget } from 'react-dnd';
 import shouldPureComponentUpdate from 'react-pure-render/function';
 import * as ItemTypeConstants from '../../Constants/ItemTypeConstants';
-import round from '../../Utils/round';
+import { round, ensureDocumentFocused } from '../../Utils';
 
 const segmentSource = {
   canDrag(props) {
@@ -73,6 +73,7 @@ export default class TimelineSegmentComponent extends Component {
     this._stopResize = ::this._stopResize;
     this._startResize = ::this._startResize;
     this._dragDuration = null;
+    this.state = { resizing: false };
   }
 
   componentDidMount() {
@@ -99,7 +100,7 @@ export default class TimelineSegmentComponent extends Component {
     const style = { width: getWidth(duration) + 'px' };
     let className = `segment is-${segment.get('type').toLowerCase()}`;
 
-    if (this.props.selected) {
+    if (this.props.selected || this.state.resizing) {
       className += ' is-selected';
     }
 
@@ -146,6 +147,7 @@ export default class TimelineSegmentComponent extends Component {
     this._mouseX = event.clientX;
     this._reverse = reverse;
     this._dragDuration = this.props.segment.get('duration');
+    this.setState({ resizing: true });
 
     window.addEventListener('mousemove', this._onResize, false);
     window.addEventListener('mouseup', this._stopResize, false);
@@ -193,8 +195,10 @@ export default class TimelineSegmentComponent extends Component {
     this._dragDuration = null;
     this._resizing = false;
     this._mouseX = null;
+    this.setState({ resizing: false });
 
     window.removeEventListener('mousemove', this._onResize, false);
     window.removeEventListener('mouseup', this._stopResize, false);
+    ensureDocumentFocused();
   }
 }

@@ -3,7 +3,7 @@ import React, { Component, PropTypes } from 'react';
 import shouldPureComponentUpdate from 'react-pure-render/function';
 import { TEXT, IMAGE, LOGO } from '../../Constants/TypeConstants';
 import { EDITING, PREVIEWING } from '../../Constants/EditorConstants';
-import bindAll from '../../Utils/bindAll';
+import { bindAll, ensureDocumentFocused } from '../../Utils';
 
 export default class ControlBarComponent extends Component {
   shouldComponentUpdate = shouldPureComponentUpdate;
@@ -87,13 +87,13 @@ export default class ControlBarComponent extends Component {
   _onClickStartPreviewing(event) {
     event.preventDefault();
     this.props.startPreviewing();
-    this._ensureDocumentFocused();
+    ensureDocumentFocused();
   }
 
   _onClickStartEditing(event) {
     event.preventDefault();
     this.props.startEditing();
-    this._ensureDocumentFocused();
+    ensureDocumentFocused();
   }
 
   _addText(event) {
@@ -113,36 +113,30 @@ export default class ControlBarComponent extends Component {
 
   _addSegment(type) {
     this.props.addSegment(new Map({ type }));
-    this._ensureDocumentFocused();
+    ensureDocumentFocused();
   }
 
   _onClickImport(event) {
     event.preventDefault();
     this.props.import();
-    this._ensureDocumentFocused();
+    ensureDocumentFocused();
   }
 
   _onClickExport(event) {
     event.preventDefault();
     this.props.export();
-    this._ensureDocumentFocused();
+    ensureDocumentFocused();
   }
 
   _onClickShare(event) {
     event.preventDefault();
     this.props.share();
-    this._ensureDocumentFocused();
+    ensureDocumentFocused();
   }
 
   _onClickReset(event) {
     event.preventDefault();
     this.props.reset();
-    this._ensureDocumentFocused();
-  }
-
-  _ensureDocumentFocused() {
-    window.setTimeout(() => {
-      document.activeElement.blur();
-    }, 10);
+    ensureDocumentFocused();
   }
 }

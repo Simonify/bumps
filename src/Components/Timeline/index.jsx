@@ -4,8 +4,7 @@ import { DropTarget, DragDropContext } from 'react-dnd';
 import HTML5Backend from 'react-dnd/modules/backends/HTML5';
 import shouldPureComponentUpdate from 'react-pure-render/function';
 import { TIMELINE_SEGMENT } from '../../Constants/ItemTypeConstants';
-import round from '../../Utils/round';
-import bindAll from '../../Utils/bindAll';
+import { round, bindAll, ensureDocumentFocused } from '../../Utils';
 import TimelineSegmentComponent from './Segment';
 
 @DragDropContext(HTML5Backend)
@@ -299,11 +298,12 @@ export default class TimelineComponent extends Component {
 
   _stopTracker(event) {
     event.preventDefault();
-    this._trackingMouse = false;
-    this._mouseX = null;
     document.body.removeEventListener('mousemove', this._onMoveTracker, false);
     window.removeEventListener('mouseup', this._stopTracker, false);
+    this._trackingMouse = false;
+    this._mouseX = null;
     this.setState({ tracking: false });
+    ensureDocumentFocused();
   }
 
   _onChangeZoom(event) {
