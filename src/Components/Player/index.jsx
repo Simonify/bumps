@@ -1,7 +1,6 @@
 import { is } from 'immutable';
 import React, { Component, PropTypes } from 'react';
-import shouldPureComponentUpdate from 'react-pure-render/function';
-import * as TypeConstants from '../../Constants/TypeConstants';
+import { IMAGE, LOGO } from '../../Constants/TypeConstants';
 import getSegmentForPosition from '../../Utils/getSegmentForPosition';
 import getVideoIdFromAudio from '../../Utils/getVideoIdFromAudio';
 import sortSegments from '../../Utils/sortSegments';
@@ -278,7 +277,7 @@ export default class PlayerComponent extends Component {
       switch (segment.get('type')) {
         default:
           break;
-        case TypeConstants.IMAGE:
+        case IMAGE:
           const url = segment.get('url');
 
           if (url) {
@@ -294,8 +293,7 @@ export default class PlayerComponent extends Component {
             }
           }
           break;
-
-        case TypeConstants.LOGO:
+        case LOGO:
           if (!loaded.logo) {
             loaded.logo = true;
 
