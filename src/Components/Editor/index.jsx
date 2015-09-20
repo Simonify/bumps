@@ -295,7 +295,7 @@ export default class EditorComponent extends Component {
         position, segments, order, sort: true
       }, true);
 
-      if (segment) {
+      if (splitSegment) {
         const index = order.indexOf(splitSegment.get('id'));
 
         if (seek > 0) {
