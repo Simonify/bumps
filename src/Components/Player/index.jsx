@@ -74,10 +74,14 @@ export default class PlayerComponent extends Component {
       return;
     } else {
       const segments = props.bump.get('segments');
+      const order = props.bump.get('order');
       const state = {};
 
-      if (this.props.bump.get('segments') !== segments) {
-        state.sortedSegments = sortSegments(segments, props.bump.get('order'));
+      if (
+        this.props.bump.get('segments') !== segments ||
+        this.props.bump.get('order') !== order
+      ) {
+        state.sortedSegments = sortSegments(segments, order);
         state.segment = getSegmentForPosition({
           segments: state.sortedSegments,
           position: this.state.position
@@ -275,7 +279,7 @@ export default class PlayerComponent extends Component {
 
     segments.forEach((segment) => {
       let url;
-      
+
       switch (segment.get('type')) {
         default:
           break;
